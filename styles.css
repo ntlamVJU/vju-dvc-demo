@@ -579,13 +579,170 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   .footer-inner { grid-template-columns: 1fr; }
   .phieu-hen-body { grid-template-columns: 1fr; }
 }
-@media (max-width: 640px) {
-  .svc-grid { grid-template-columns: 1fr; }
+
+/* ─── Mobile / Tablet ≤ 768px ─── */
+@media (max-width: 768px) {
+  /* Layout containers */
+  .page { padding: 16px 14px 28px; }
+
+  /* Utility bar — gọn lại */
+  .utility-bar { font-size: 11.5px; }
+  .utility-inner { padding: 5px 12px; flex-wrap: wrap; gap: 8px; }
+  .utility-left { gap: 10px; flex-wrap: wrap; }
+  .utility-right { gap: 8px; flex-wrap: wrap; }
+  .utility-left a, .utility-left span:first-child { display: none; }
+  .utility-left a:nth-child(2), .utility-left a:nth-child(3) { display: none; }
+
+  /* Header brand — logo dưới + text bên cạnh nhỏ */
+  .header-inner { padding: 12px 14px; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .brand { gap: 10px; min-width: 0; flex: 1 1 auto; }
+  .brand img { width: 44px; height: 44px; }
+  .brand-title { font-size: 14px; line-height: 1.25; letter-spacing: .2px; }
+  .brand-sub { font-size: 11px; }
+  .header-actions { gap: 6px; flex-shrink: 0; }
+  .header-actions .btn-lang { padding: 6px 9px; font-size: 11.5px; }
+  .btn-login-top { padding: 7px 12px; font-size: 12px; }
+  .btn-login-top svg { display: none; }
+
+  /* Main nav — scroll ngang */
+  .main-nav-inner { padding: 0 10px; }
+  .main-nav a { padding: 11px 12px; font-size: 13px; }
+
+  /* Hero search → stack 1 cột */
+  .hero { padding: 22px 14px 26px; }
+  .hero h1 { font-size: 18px; }
+  .hero p { font-size: 13px; }
+  .hero-search { flex-direction: column; padding: 6px; gap: 4px; }
+  .hero-search select, .hero-search input, .hero-search button {
+    width: 100%; padding: 10px 12px; border-right: 0 !important;
+    border-radius: 4px;
+  }
+  .hero-search select { border-bottom: 1px solid var(--slate-200); }
+  .hero-quicktabs { gap: 10px; font-size: 12px; }
+
+  /* Stats strip */
+  .stats-strip { grid-template-columns: 1fr 1fr; }
+  .stat-cell { padding: 14px 12px; border-right: 1px solid var(--slate-200); }
+  .stat-cell:nth-child(2n) { border-right: 0; }
+  .stat-cell:nth-child(1), .stat-cell:nth-child(2) {
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .stat-cell .num { font-size: 20px; }
+  .stat-cell .lbl { font-size: 11.5px; }
+
+  /* Grids */
+  .svc-grid { grid-template-columns: 1fr; gap: 10px; }
   .cats { grid-template-columns: repeat(2, 1fr); }
-  .stats-strip { grid-template-columns: 1fr; }
-  .stat-cell { border-right: 0 !important; border-bottom: 1px solid var(--slate-100); }
-  .stat-cell:last-child { border-bottom: 0; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .cat-grid { grid-template-columns: 1fr; }
+
+  /* Page header — wrap & buttons full width */
+  .page-header { flex-direction: column; align-items: stretch; }
+  .page-header .hstack { flex-wrap: wrap; }
+
+  /* Section heads */
+  .section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .section-head h2 { font-size: 17px; }
+
+  /* DVCLT 6 big-step → 2 hàng × 3 cột */
+  .bigstep { grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 16px 0; }
+  .bs { min-height: 72px; padding: 8px 6px; }
+  .bs .bs-num { font-size: 18px; }
+  .bs .bs-label { font-size: 11px; line-height: 1.25; }
+  .bs + .bs::before { display: none; }
+
+  /* DVCLT banner */
+  .dvclt-banner { padding: 16px 14px 14px; }
+  .dvclt-banner h1 { font-size: 16px; letter-spacing: .1px; }
+  .dvclt-banner .sub { font-size: 11.5px; }
+
+  /* Form */
+  .dvclt-field { padding: 5px 10px; }
+  .dvclt-field input, .dvclt-field select, .dvclt-field textarea { font-size: 13.5px; }
+  .dvclt-actions { flex-direction: column-reverse; gap: 8px; padding-top: 16px; }
+  .dvclt-actions .btn, .dvclt-actions .btn-text { width: 100%; justify-content: center; }
+
+  /* Service card hover effect off on touch */
+  .svc-card:hover { border-color: var(--slate-200); }
+  .svc-meta { grid-template-columns: 100px 1fr; gap: 4px 10px; font-size: 12px; }
+
+  /* 6-criteria tabs (service-detail) */
+  .dvc-tabs { gap: 0; padding: 0; overflow-x: auto; scrollbar-width: thin; }
+  .dvc-tabs .tab { padding: 10px 12px; font-size: 12.5px; flex-shrink: 0; }
+  .dvc-tabs .tab .count { display: none; }
+
+  /* Flow stepper (service-detail "luồng tốt nhất") */
+  .flow-banner { padding: 14px 14px; }
+  .flow-banner h3 { font-size: 13px; }
+  .flow-steps { flex-direction: column; gap: 8px; align-items: stretch; }
+  .flow-step { min-width: 0; flex-direction: row; text-align: left; gap: 12px; padding: 8px 6px; border-left: 2px solid var(--slate-200); }
+  .flow-step.current { border-left-color: var(--brand-red); }
+  .flow-step .fs-circle { width: 32px; height: 32px; font-size: 14px; }
+  .flow-step + .flow-step::before { display: none; }
+
+  /* Filter bar (services.html) */
+  .card-body[style*="grid-template-columns: 200px 160px 140px 1fr"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Phiếu hẹn */
+  .phieu-hen-head { padding: 16px 14px 10px; }
+  .phieu-hen-head h1 { font-size: 16px; line-height: 1.25; }
+  .phieu-hen-body { grid-template-columns: 1fr; padding: 16px; gap: 16px; }
+  .phieu-field .k { width: 110px; font-size: 12px; }
+  .phieu-field .v { font-size: 13px; }
+  .phieu-field .v.big { font-size: 14px; }
+  .qr { margin: 0 auto; max-width: 200px; }
+  .phieu-actions { flex-direction: column; gap: 8px; }
+  .phieu-actions .btn { width: 100%; justify-content: center; }
+
+  /* Lookup */
+  .lookup-card { padding: 20px 14px; }
+  .lookup-card h2 { font-size: 17px; }
+  .lookup-form { flex-direction: column; gap: 6px; padding: 6px; }
+  .lookup-form input, .lookup-form button { width: 100%; padding: 10px 14px; }
+
+  /* Stepper horizontal (lookup result + phieu-hen + my-requests) → stack vertical */
+  .stepper-h { flex-direction: column; gap: 8px; padding: 12px 0; }
+  .step { flex-direction: row; text-align: left; gap: 12px; width: 100%; padding-left: 0; }
+  .step-circle { flex-shrink: 0; }
+  .step-label { font-size: 13px; }
+  .step-date { font-size: 11px; }
+  .step + .step::before { display: none; }
+
+  /* My requests cards */
+  .ho-so-card { padding: 14px; }
+  .ho-so-card > div[style*="grid-template-columns: 1fr auto"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tables (stats.html SLA) */
+  table { font-size: 12.5px; }
+  table th, table td { padding: 8px 10px !important; }
+
+  /* Footer */
+  .footer-inner { padding: 0 4px; gap: 18px; }
+  .footer-brand h3 { font-size: 14px; }
+
+  /* Wizard step inline styles fallback */
+  .stepper { flex-direction: column; align-items: stretch; }
+  .step-line { width: 100%; height: 1px; margin: 4px 0; }
+}
+
+/* ─── Ultra-small ≤ 420px ─── */
+@media (max-width: 420px) {
   .brand-sub { display: none; }
+  .brand-title { font-size: 13px; }
+  .header-actions .btn-lang span:not(.flag) { display: none; }
+  .btn-login-top { padding: 6px 10px; font-size: 11.5px; }
+  .bigstep { grid-template-columns: repeat(2, 1fr); }
+  .cats { grid-template-columns: 1fr; }
+  .stats-strip { grid-template-columns: 1fr; }
+  .stat-cell { border-right: 0 !important; }
+  .stat-cell:not(:last-child) { border-bottom: 1px solid var(--slate-200); }
+}
+
+/* ─── Legacy 640px breakpoint (kept for stat-strip stack) ─── */
+@media (max-width: 640px) {
   .dvc-criteria { grid-template-columns: 1fr; }
-  .grid-2 { grid-template-columns: 1fr; }
 }
