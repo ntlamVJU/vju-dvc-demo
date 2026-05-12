@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Hồ sơ của tôi · Cổng DVC VJU</title>
+ <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="site-shell"></div>
+
+<main class="page">
+ <div class="crumb"><a href="index.html">Trang chủ</a> <span class="sep">›</span> <span>Hồ sơ của tôi</span></div>
+
+ <div class="section-head">
+ <div>
+ <h2>Hồ sơ của tôi</h2>
+ <p>Theo dõi tất cả hồ sơ dịch vụ công bạn đã nộp</p>
+ </div>
+ <a class="btn btn-primary" href="services.html">+ Nộp hồ sơ mới</a>
+ </div>
+
+ <!-- ───── Quick stats ───── -->
+ <div class="stats-strip" style="margin-bottom: 18px;">
+ <div class="stat-cell"><div class="icon b"></div><div><div class="num" id="my-total">—</div><div class="lbl">Tổng hồ sơ</div></div></div>
+ <div class="stat-cell"><div class="icon a"></div><div><div class="num" id="my-processing">—</div><div class="lbl">Đang xử lý</div></div></div>
+ <div class="stat-cell"><div class="icon g"></div><div><div class="num" id="my-done">—</div><div class="lbl">Đã có kết quả</div></div></div>
+ <div class="stat-cell"><div class="icon r"></div><div><div class="num" id="my-late">—</div><div class="lbl">Trễ hạn</div></div></div>
+ </div>
+
+ <!-- ───── Filter tabs ───── -->
+ <div class="card">
+ <div class="card-header" style="padding: 12px 22px;">
+ <div class="hstack" style="gap: 4px;">
+ <button class="chip-tab on" data-f="all">Tất cả</button>
+ <button class="chip-tab" data-f="processing">Đang xử lý</button>
+ <button class="chip-tab" data-f="done">Đã trả KQ</button>
+ <button class="chip-tab" data-f="late">Trễ hạn</button>
+ </div>
+ <a class="btn btn-secondary btn-sm" href="lookup.html">Tra cứu bằng mã</a>
+ </div>
+ <div class="card-body" id="my-list" style="padding: 14px;"></div>
+ </div>
+</main>
+
+<style>.chip-tab { padding: 7px 14px; border-radius: 999px; background: var(--slate-100); color: var(--slate-700); font-size: 13px; font-weight: 600; }
+ .chip-tab:hover { background: var(--slate-200); }
+ .chip-tab.on { background: var(--red-50); color: var(--red-700); border: 1px solid var(--red-200); }
+ .ho-so-card {
+ border: 1px solid var(--slate-200); border-radius: 10px; padding: 18px;
+ margin-bottom: 12px; background: #fff; transition: box-shadow .15s, border-color .15s;
+ }
+ .ho-so-card:hover { box-shadow: var(--shadow); border-color: var(--red-200); }</style>
+
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>mountLayout("");
+
+let filter = "all";
+
+function getList() {
+ if (filter === "all") return SUBMITTED;
+ return SUBMITTED.filter(r =>r.status === filter);
+}
+
+function render() {
+ const list = getList();
+ const host = document.getElementById("my-list");
+ if (list.length === 0) {
+ host.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--slate-500);">Không có hồ sơ nào trong mục này.</div>`;
+ return;
+ }
+ host.innerHTML = list.map(r =>{
+ const s = r.service;
+ const totalSteps = s.steps.length;
+ const pct = Math.round((r.current_step / Math.max(1, totalSteps - 1)) * 100);
+ const due = new Date(r.due_at);
+ const daysLeft = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24));
+ return `<div class="ho-so-card">
+ <div style="display: grid; grid-template-columns: 1fr auto; gap: 18px; margin-bottom: 14px;">
+ <div>
+ <div class="hstack" style="gap: 10px; margin-bottom: 4px;">
+ <span class="svc-code">${esc(r.code)}</span>${statusBadge(r.status)}</div>
+ <div style="font-weight: 700; font-size: 15.5px; margin-top: 2px;">${esc(s.name)}</div>
+ <div class="muted" style="font-size: 12.5px; margin-top: 2px;">${esc(s.agency)} · Mức ${s.muc}</div>
+ </div>
+ <div style="text-align: right;">
+ <div class="muted" style="font-size: 11.5px;">Ngày nộp</div>
+ <div style="font-weight: 600; font-size: 13px;">${fmtDate(r.submitted_at)}</div>
+ <div class="muted" style="font-size: 11.5px; margin-top: 4px;">Hẹn trả</div>
+ <div style="font-weight: 700; font-size: 13px; color: ${r.status === "late" ? "var(--red-700)" : r.status === "done" ? "var(--green-700)" : "var(--slate-900)"};">${fmtDate(r.due_at)}${r.status !== "done" && daysLeft >0 ? ` (còn ${daysLeft} ngày)` : r.status === "late" ? ` (trễ ${-daysLeft} ngày)` : ""}</div>
+ </div>
+ </div>
+
+ <!-- Stepper -->
+ <div class="stepper-h" style="padding: 8px 0; margin: 0;">${s.steps.map((st, i) =>`<div class="step ${i< r.current_step ? "done" : (i === r.current_step ? "active" : "")}">
+ <div class="step-circle" style="width:28px; height:28px; font-size:12px;">${i + 1}</div>
+ <div class="step-label" style="font-size: 11.5px;">${esc(st.name)}</div>
+ </div>`).join("")}</div>
+
+ <div class="hstack" style="margin-top: 14px; gap: 8px;">
+ <a class="btn btn-primary btn-sm" href="lookup.html?code=${r.code}">Xem chi tiết</a>
+ <button class="btn btn-secondary btn-sm">Tải phiếu hẹn</button>${r.status === "done" && !r.rating ? `<a class="btn btn-secondary btn-sm" href="rate.html?code=${r.code}">Đánh giá</a>` : ""}
+ ${r.status === "processing" ? `<button class="btn btn-ghost btn-sm">Liên hệ cán bộ xử lý</button>` : ""}</div>
+ </div>`;
+ }).join("");
+}
+
+// Stats
+document.getElementById("my-total").textContent = SUBMITTED.length;
+document.getElementById("my-processing").textContent = SUBMITTED.filter(r =>r.status === "processing" || r.status === "pending").length;
+document.getElementById("my-done").textContent = SUBMITTED.filter(r =>r.status === "done").length;
+document.getElementById("my-late").textContent = SUBMITTED.filter(r =>r.status === "late").length;
+
+document.querySelectorAll(".chip-tab").forEach(b =>b.addEventListener("click", () =>{
+ document.querySelectorAll(".chip-tab").forEach(x =>x.classList.remove("on"));
+ b.classList.add("on");
+ filter = b.dataset.f;
+ render();
+}));
+render();</script>
+</body>
+</html>

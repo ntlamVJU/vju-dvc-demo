@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="vi">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Nộp hồ sơ trực tuyến · Cổng DVC VJU</title>
+ <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="site-shell"></div>
+
+<main class="page" id="root">
+ <div class="crumb" id="bc"></div>
+
+ <!-- ───── DVCLT official banner ───── -->
+ <div class="dvclt-banner">
+ <h1 id="dvclt-title">NỘP HỒ SƠ TRỰC TUYẾN</h1>
+ <div class="sub" id="dvclt-sub">—</div>
+ </div>
+
+ <!-- ───── 6 big numbered steps (DVCLT style) ───── -->
+ <div class="bigstep" id="bigstep">
+ <div class="bs active" data-i="1"><div class="bs-num">01</div><div class="bs-label">Kê khai<br/>thông tin</div></div>
+ <div class="bs" data-i="2"><div class="bs-num">02</div><div class="bs-label">Đính kèm<br/>hồ sơ</div></div>
+ <div class="bs" data-i="3"><div class="bs-num">03</div><div class="bs-label">Xem lại<br/>thông tin</div></div>
+ <div class="bs" data-i="4"><div class="bs-num">04</div><div class="bs-label">Chọn hình<br/>thức nhận KQ</div></div>
+ <div class="bs" data-i="5"><div class="bs-num">05</div><div class="bs-label">Xác nhận<br/>& gửi</div></div>
+ <div class="bs" data-i="6"><div class="bs-num">06</div><div class="bs-label">Hoàn thành</div></div>
+ </div>
+
+ <!-- ───── Pane container ───── -->
+ <div class="card">
+ <div class="card-body" id="pane-host"></div>
+ </div>
+</main>
+
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>mountLayout("services");
+
+const code = new URLSearchParams(location.search).get("code") || SERVICES[0].code;
+const s = findService(code) || SERVICES[0];
+const cat = findCategory(s.cat);
+
+document.getElementById("bc").innerHTML = `<a href="index.html">Trang chủ</a> <span class="sep">›</span>
+ <a href="services.html">Danh mục dịch vụ</a> <span class="sep">›</span>
+ <a href="service-detail.html?code=${s.code}">${esc(s.name)}</a> <span class="sep">›</span>
+ <span>Nộp hồ sơ</span>`;
+
+document.getElementById("dvclt-title").textContent = "NỘP HỒ SƠ: " + s.name.toUpperCase();
+document.getElementById("dvclt-sub").innerHTML = `Mã thủ tục:<strong style="color:var(--red-700); font-family:ui-monospace,Consolas,monospace;">${s.code}</strong>· Mức ${s.muc} · ${s.agency} · Thời hạn ${s.sla_days} ngày làm việc · ${feeText(s.fee)}`;
+
+const data = {}; // submitted values
+let step = 1;
+const host = document.getElementById("pane-host");
+
+function setStep(i) {
+ step = i;
+ document.querySelectorAll(".bs").forEach(el =>{
+ const n = +el.dataset.i;
+ el.classList.toggle("active", n === step);
+ el.classList.toggle("done", n< step);
+ });
+ render();
+ window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function render() {
+ if (step === 1) renderStep1();
+ else if (step === 2) renderStep2();
+ else if (step === 3) renderStep3();
+ else if (step === 4) renderStep4();
+ else if (step === 5) renderStep5();
+ else renderStep6();
+}
+
+// ─── STEP 1 — Kê khai thông tin (DVCLT-style fields, yellow active) ───
+function renderStep1() {
+ host.innerHTML = `<div class="dvclt-section-head"><h3>I. Thông tin người nộp hồ sơ</h3></div>
+
+ <div class="grid-2">
+ <div class="dvclt-field">
+ <label>Họ và tên<span class="req">*</span></label>
+ <input type="text" value="Nguyễn Văn A" id="i-name" />
+ </div>
+ <div class="dvclt-field">
+ <label>Mã sinh viên / CB<span class="req">*</span></label>
+ <input type="text" value="VJU2024001" id="i-id" />
+ </div>
+ </div>
+ <div class="grid-2">
+ <div class="dvclt-field">
+ <label>Email liên hệ<span class="req">*</span></label>
+ <input type="email" value="a.nguyen@vju.ac.vn" id="i-email" />
+ </div>
+ <div class="dvclt-field">
+ <label>Số điện thoại<span class="req">*</span></label>
+ <input type="tel" placeholder="0xxx xxx xxx" id="i-phone" />
+ </div>
+ </div>
+
+ <div class="dvclt-section-head"><h3>II. Nội dung đề nghị</h3></div>${s.fields.map(f =>fieldHtml(f)).join("")}<div class="dvclt-actions">
+ <a class="btn btn-text" href="service-detail.html?code=${s.code}">Huỷ</a>
+ <button class="btn btn-primary" onclick="if (validateStep1()) setStep(2)">Bước tiếp theo →</button>
+ </div>`;
+}
+
+function fieldHtml(f) {
+ if (f.type === "textarea") {
+ return `<div class="dvclt-field"><label>${esc(f.label)} ${f.required ? '<span class="req">*</span>' : ''}</label>
+ <textarea id="f-${f.key}" placeholder="${esc(f.placeholder || "")}">${esc(data[f.key] || "")}</textarea></div>`;
+ }
+ if (f.type === "select") {
+ return `<div class="dvclt-field"><label>${esc(f.label)} ${f.required ? '<span class="req">*</span>' : ''}</label>
+ <select id="f-${f.key}"><option value="">— Chọn —</option>${(f.options || []).map(o =>`<option ${data[f.key] === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`;
+ }
+ return `<div class="dvclt-field"><label>${esc(f.label)} ${f.required ? '<span class="req">*</span>' : ''}</label>
+ <input type="${f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}" id="f-${f.key}" value="${esc(data[f.key] || "")}" placeholder="${esc(f.placeholder || "")}" /></div>`;
+}
+
+window.validateStep1 = function() {
+ let ok = true;
+ ["i-name","i-id","i-email","i-phone"].forEach(id =>{
+ const el = document.getElementById(id);
+ const wrap = el.closest(".dvclt-field");
+ if (!el.value.trim()) { wrap.classList.add("error"); ok = false; }
+ else { wrap.classList.remove("error"); data[id] = el.value; }
+ });
+ s.fields.forEach(f =>{
+ const el = document.getElementById("f-" + f.key);
+ const wrap = el.closest(".dvclt-field");
+ if (f.required && !el.value.trim()) { wrap.classList.add("error"); ok = false; }
+ else { wrap.classList.remove("error"); data[f.key] = el.value; }
+ });
+ if (!ok) alert(" Vui lòng điền đầy đủ các trường bắt buộc (nền vàng).");
+ return ok;
+};
+
+// ─── STEP 2 — Đính kèm hồ sơ ───
+function renderStep2() {
+ host.innerHTML = `<div class="dvclt-section-head"><h3>Đính kèm thành phần hồ sơ</h3></div>
+ <p class="muted" style="margin: 0 0 14px;">Vui lòng đính kèm các tệp tin tương ứng với từng thành phần hồ sơ. Định dạng: PDF, DOC, DOCX, JPG, PNG. Dung lượng tối đa: 10MB/tệp.</p>${s.docs.map((d, i) =>`<div class="dvclt-field" style="background: ${d.required ? '#FBF6E2' : '#fff'}; border-color: ${d.required ? '#E5A823' : 'var(--slate-200)'};">
+ <label>${i + 1}. ${esc(d.name)} ${d.required ? '<span class="req">*</span>' : '<span class="muted" style="font-weight: normal;">(Tuỳ chọn)</span>'}</label>
+ <div style="display:flex; gap:10px; align-items:center; padding: 8px 0;">
+ <button class="btn btn-secondary btn-sm" type="button">Chọn tệp</button>${d.has_template ? '<button class="btn btn-ghost btn-sm" type="button">Tải mẫu</button>' : ''}<span class="muted" style="font-size:12.5px;">Chưa chọn tệp</span>
+ </div>
+ </div>`).join("")}<div class="dvclt-actions">
+ <button class="btn btn-text" onclick="setStep(1)">← Bước trước</button>
+ <button class="btn btn-primary" onclick="setStep(3)">Bước tiếp theo →</button>
+ </div>`;
+}
+
+// ─── STEP 3 — Xem lại ───
+function renderStep3() {
+ const fieldRows = [
+ ["Họ và tên", data["i-name"]],
+ ["Mã SV / CB", data["i-id"]],
+ ["Email", data["i-email"]],
+ ["SĐT", data["i-phone"]],
+ ...s.fields.map(f =>[f.label, data[f.key] || "—"]),
+ ];
+ host.innerHTML = `<div class="dvclt-section-head"><h3>Xem lại thông tin đã kê khai</h3></div>
+ <p class="muted" style="margin: 0 0 14px;">Kiểm tra kỹ trước khi gửi hồ sơ.</p>
+
+ <div style="border: 1px solid var(--slate-200); border-radius: 8px; overflow: hidden;">${fieldRows.map(([k, v]) =>`<div style="display: grid; grid-template-columns: 220px 1fr; padding: 11px 16px; border-bottom: 1px solid var(--slate-100); background: #fff;">
+ <div class="muted" style="font-size: 12.5px; font-weight: 600;">${esc(k)}</div>
+ <div style="font-weight: 600;">${esc(v || "—")}</div>
+ </div>`).join("")}</div>
+
+ <div class="dvclt-section-head"><h3>Tệp đính kèm</h3></div>
+ <p class="muted" style="font-size: 13px;">${s.docs.length} tệp được đính kèm (mock)</p>
+
+ <div class="dvclt-actions">
+ <button class="btn btn-text" onclick="setStep(2)">← Bước trước</button>
+ <button class="btn btn-primary" onclick="setStep(4)">Bước tiếp theo →</button>
+ </div>`;
+}
+
+// ─── STEP 4 — Chọn hình thức nhận KQ ───
+function renderStep4() {
+ host.innerHTML = `<div class="dvclt-section-head"><h3>Chọn hình thức nhận kết quả</h3></div>
+
+ <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+ <label class="recv-card" style="cursor:pointer; padding: 18px; border:2px solid var(--red-600); border-radius: 10px; background: var(--red-50); text-align: center;">
+ <input type="radio" name="recv" value="online" checked style="display:none;" />
+ <div style="font-size:36px;"></div>
+ <div style="font-weight: 700; margin-top: 6px;">Trực tuyến</div>
+ <div class="muted" style="font-size:12px; margin-top:4px;">Nhận file PDF có ký số gửi qua email</div>
+ </label>
+ <label class="recv-card" style="cursor:pointer; padding: 18px; border:2px solid var(--slate-200); border-radius: 10px; background: #fff; text-align: center;">
+ <input type="radio" name="recv" value="onsite" style="display:none;" />
+ <div style="font-size:36px;"></div>
+ <div style="font-weight: 700; margin-top: 6px;">Tại Bộ phận Một cửa</div>
+ <div class="muted" style="font-size:12px; margin-top:4px;">Đến trực tiếp Một cửa P. Đào tạo</div>
+ </label>
+ <label class="recv-card" style="cursor:pointer; padding: 18px; border:2px solid var(--slate-200); border-radius: 10px; background: #fff; text-align: center;">
+ <input type="radio" name="recv" value="post" style="display:none;" />
+ <div style="font-size:36px;"></div>
+ <div style="font-weight: 700; margin-top: 6px;">Bưu điện</div>
+ <div class="muted" style="font-size:12px; margin-top:4px;">Gửi về địa chỉ bạn cung cấp (phí 30.000đ)</div>
+ </label>
+ </div>
+
+ <div class="dvclt-section-head"><h3>Cam kết</h3></div>
+ <label style="display:flex; gap:10px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
+ <input type="checkbox" id="agree" />
+ <span style="font-size: 13.5px;">Tôi cam đoan thông tin trên là đúng sự thật và hoàn toàn chịu trách nhiệm trước pháp luật. Nếu phát hiện sai sự thật, tôi sẽ chịu xử lý theo quy định.</span>
+ </label>
+
+ <div class="dvclt-actions">
+ <button class="btn btn-text" onclick="setStep(3)">← Bước trước</button>
+ <button class="btn btn-primary" id="next-4" onclick="
+ if (!document.getElementById('agree').checked) { alert(' Vui lòng tick cam kết'); return; }
+ setStep(5);
+ ">Bước tiếp theo →</button>
+ </div>`;
+ // toggle radio card highlights
+ document.querySelectorAll(".recv-card").forEach(card =>{
+ card.addEventListener("click", () =>{
+ document.querySelectorAll(".recv-card").forEach(c =>{ c.style.border = "2px solid var(--slate-200)"; c.style.background = "#fff"; });
+ card.style.border = "2px solid var(--red-600)";
+ card.style.background = "var(--red-50)";
+ });
+ });
+}
+
+// ─── STEP 5 — Xác nhận & gửi ───
+function renderStep5() {
+ host.innerHTML = `<div style="text-align:center; padding: 40px 20px;">
+ <div style="font-size: 64px; margin-bottom: 14px;"></div>
+ <h2 style="margin: 0 0 8px; font-size: 22px;">Sẵn sàng gửi hồ sơ</h2>
+ <p class="muted" style="margin: 0 0 22px;">Hệ thống sẽ phát hành mã hồ sơ và phiếu hẹn ngay sau khi bạn gửi.</p>
+
+ <div style="display: inline-block; padding: 18px 28px; background: var(--gold-50); border: 1px dashed #E5A823; border-radius: 10px; margin-bottom: 22px; text-align: left;">
+ <div style="font-size: 12.5px; color: var(--slate-600); margin-bottom: 4px;">Dự kiến trả kết quả:</div>
+ <div style="font-size: 18px; font-weight: 800; color: var(--red-700);">${slaDate()}</div>
+ </div>
+
+ <div class="dvclt-actions">
+ <button class="btn btn-text" onclick="setStep(4)">← Bước trước</button>
+ <button class="btn btn-primary btn-lg" onclick="submitForm()">Gửi hồ sơ ngay</button>
+ </div>
+ </div>`;
+}
+
+function slaDate() {
+ const d = new Date();
+ let added = 0;
+ while (added< s.sla_days) {
+ d.setDate(d.getDate() + 1);
+ if (d.getDay() !== 0 && d.getDay() !== 6) added++;
+ }
+ return d.toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+}
+
+window.submitForm = function() {
+ const newCode = "DVC-2026-" + String(Math.floor(Math.random() * 900000) + 100000);
+ location.href = "submit-success.html?code=" + newCode + "&svc=" + s.code;
+};
+
+// ─── STEP 6 — không dùng (chuyển sang submit-success.html) ───
+function renderStep6() { setStep(5); }
+
+setStep(1);</script>
+</body>
+</html>

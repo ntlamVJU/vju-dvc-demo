@@ -1,0 +1,591 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap");
+
+/* Cổng dịch vụ công VJU — theo palette dichvucong.gov.vn */
+:root {
+  /* Primary terracotta (màu gạch ấm) — KHÔNG dùng đỏ tươi */
+  --red-50:  #FBF1EC;
+  --red-100: #F5DDD0;
+  --red-200: #EDC1AB;
+  --red-500: #E9926F;   /* light terracotta */
+  --red-600: #CE7A58;   /* PRIMARY — terracotta chuẩn DVC */
+  --red-700: #B5613D;   /* hover/dark */
+  --red-800: #8E4B30;
+  --red-900: #6B381F;
+
+  /* Navy text (không đen tuyền) */
+  --slate-50:  #F5F5F5;     /* main bg */
+  --slate-100: #EBEEF0;     /* card bg / hover */
+  --slate-200: #DBDCE0;     /* border */
+  --slate-300: #ADBCC3;
+  --slate-400: #8B98A0;
+  --slate-500: #666666;     /* muted text */
+  --slate-600: #555555;
+  --slate-700: #292D34;
+  --slate-800: #1E2F41;     /* main text */
+  --slate-900: #1E2F41;
+
+  /* Accent (chỉ dùng khi cần, không màu mè) */
+  --amber-50: #FBF4D9; --amber-500: #EAC344; --amber-700: #B59023;
+  --green-50: #E6F4EC; --green-500: #219653; --green-700: #176C3E;
+  --blue-50:  #E9F0F8; --blue-500: #2A6EBB; --blue-700: #1F558F;
+  --violet-50:#F5F3FF; --violet-500:#8B5CF6;--violet-700:#6D28D9;
+
+  /* Brand red (cho banner header — đồng bộ với logo VJU) */
+  --brand-red:      #B91C1C;
+  --brand-red-dark: #8E1414;
+
+  --radius: 6px; --radius-lg: 8px;
+  --shadow-sm: 0 1px 2px rgba(30,47,65,.05);
+  --shadow: 0 1px 3px rgba(30,47,65,.08);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Nunito", "Segoe UI", -apple-system, Roboto, ui-sans-serif, system-ui, sans-serif;
+  color: var(--slate-800);
+  background: var(--slate-50);
+  -webkit-font-smoothing: antialiased; line-height: 1.55;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: 0; background: transparent; }
+input, select, textarea { font-family: inherit; font-size: inherit; }
+
+/* ───── Top utility bar (national-portal style) ───── */
+.utility-bar {
+  background: var(--brand-red-dark); color: rgba(255,255,255,.85);
+  font-size: 12.5px;
+}
+.utility-inner {
+  max-width: 1280px; margin: 0 auto; padding: 6px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.utility-inner a, .utility-inner button { color: inherit; }
+.utility-inner a:hover, .utility-inner button:hover { color: #fff; }
+.utility-left { display: flex; gap: 18px; align-items: center; }
+.utility-right { display: flex; gap: 14px; align-items: center; }
+
+/* ───── Main header (logo + title + login) — đỏ đồng bộ logo VJU ───── */
+.site-header { background: var(--brand-red); color: #fff; box-shadow: var(--shadow); }
+.header-inner {
+  max-width: 1280px; margin: 0 auto; padding: 16px 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.brand img {
+  width: 64px; height: 64px; background: #fff;
+  border-radius: 50%; padding: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  flex-shrink: 0;
+}
+.brand-text { min-width: 0; }
+.brand-title {
+  font-weight: 800; font-size: 18px; letter-spacing: .3px;
+  line-height: 1.2; text-transform: uppercase;
+}
+.brand-sub { font-size: 13px; opacity: .92; margin-top: 3px; }
+
+.header-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+.btn-lang {
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  color: #fff; padding: 7px 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-login-top {
+  background: #fff; color: var(--brand-red);
+  padding: 9px 18px; border-radius: 6px;
+  font-weight: 700; font-size: 13.5px;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-login-top:hover { background: var(--slate-100); }
+
+/* ───── Main nav (đỏ đậm hơn header) ───── */
+.main-nav { background: var(--brand-red-dark); }
+.main-nav-inner {
+  max-width: 1280px; margin: 0 auto; padding: 0 24px;
+  display: flex; gap: 0; overflow-x: auto;
+}
+.main-nav a {
+  color: #fff; padding: 12px 20px;
+  font-size: 14px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 8px;
+  border-bottom: 3px solid transparent;
+  opacity: .88; white-space: nowrap;
+  transition: opacity .15s, border-color .15s, background .15s;
+}
+.main-nav a:hover { opacity: 1; background: rgba(255,255,255,.05); }
+.main-nav a.active { opacity: 1; border-bottom-color: var(--gold); background: rgba(0,0,0,.15); }
+
+/* ───── Hero (tối giản — không gradient, không decorative effects) ───── */
+.hero {
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-200);
+  padding: 32px 24px 36px;
+}
+.hero-inner { max-width: 1100px; margin: 0 auto; text-align: center; }
+.hero h1 {
+  margin: 0 0 6px; font-size: 22px; font-weight: 700;
+  color: var(--slate-900); letter-spacing: .2px;
+}
+.hero p { font-size: 14px; color: var(--slate-600); margin: 0 0 20px; }
+.hero-search {
+  background: #fff; border-radius: 6px; padding: 4px;
+  display: flex; gap: 0; max-width: 720px; margin: 0 auto;
+  border: 1px solid var(--slate-300);
+}
+.hero-search select, .hero-search input {
+  padding: 10px 14px; border: 0; outline: none; background: transparent;
+  font-size: 14px; color: var(--slate-900);
+}
+.hero-search select { border-right: 1px solid var(--slate-200); min-width: 160px; }
+.hero-search input { flex: 1; }
+.hero-search button {
+  background: var(--red-700); color: #fff;
+  padding: 10px 20px; border-radius: 4px;
+  font-weight: 600; font-size: 14px;
+}
+.hero-search button:hover { background: var(--red-800); }
+.hero-quicktabs {
+  display: flex; gap: 16px; justify-content: center; margin-top: 14px; flex-wrap: wrap;
+}
+.hero-quicktabs a {
+  font-size: 13px; padding: 2px 0; color: var(--slate-700);
+  border-bottom: 1px solid transparent;
+}
+.hero-quicktabs a:hover { color: var(--red-700); border-bottom-color: var(--red-700); }
+
+/* ───── Layout ───── */
+.page { max-width: 1280px; margin: 0 auto; padding: 24px; }
+.section { margin-bottom: 28px; }
+.section-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 14px; gap: 16px;
+}
+.section-head h2 {
+  margin: 0; font-size: 20px; font-weight: 800; color: var(--slate-900);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.section-head h2::before {
+  content: ""; width: 4px; height: 22px; background: var(--red-600); border-radius: 2px;
+}
+.section-head p { margin: 4px 0 0 12px; font-size: 13px; color: var(--slate-500); }
+.section-head .link { font-size: 13px; font-weight: 600; color: var(--red-700); }
+.section-head .link:hover { text-decoration: underline; }
+
+/* ───── Public stats strip (tối giản: bỏ icon màu) ───── */
+.stats-strip {
+  background: #fff; border: 1px solid var(--slate-200); border-radius: 6px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+  overflow: hidden;
+}
+.stat-cell {
+  padding: 18px 22px; text-align: center;
+  border-right: 1px solid var(--slate-200);
+}
+.stat-cell:last-child { border-right: 0; }
+.stat-cell .icon { display: none; }
+.stat-cell .num { font-size: 24px; font-weight: 700; color: var(--red-700); line-height: 1.1; }
+.stat-cell .lbl { font-size: 12.5px; color: var(--slate-600); margin-top: 4px; }
+
+/* ───── Category strip ───── */
+.cats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.cat-tile {
+  background: #fff; border: 1px solid var(--slate-200); border-radius: var(--radius);
+  padding: 18px 14px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  transition: transform .12s, box-shadow .15s, border-color .15s;
+}
+.cat-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--red-200); }
+.cat-tile .emoji { font-size: 28px; }
+.cat-tile .name { font-size: 13px; font-weight: 700; color: var(--slate-900); }
+.cat-tile .cnt { font-size: 11.5px; color: var(--slate-500); }
+
+/* ───── Service card (tối giản: bỏ hover transform, bỏ màu Mức) ───── */
+.svc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.svc-card {
+  background: #fff; border: 1px solid var(--slate-200); border-radius: 6px;
+  padding: 16px; display: flex; flex-direction: column; gap: 8px;
+  position: relative;
+  transition: border-color .12s;
+}
+.svc-card:hover { border-color: var(--red-700); }
+.svc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.svc-code {
+  font-size: 11px; font-weight: 500; color: var(--slate-500);
+  font-family: ui-monospace, Consolas, monospace;
+}
+.svc-muc {
+  font-size: 11px; font-weight: 600; padding: 1px 8px;
+  border-radius: 3px; flex-shrink: 0;
+  border: 1px solid var(--slate-300); color: var(--slate-700); background: #fff;
+}
+.svc-muc.muc-4 { color: var(--red-700); border-color: var(--red-700); }
+.svc-name { font-size: 14.5px; font-weight: 700; color: var(--slate-900); line-height: 1.35; }
+.svc-desc { font-size: 12.5px; color: var(--slate-600); line-height: 1.5; flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.svc-meta {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px;
+  font-size: 11.5px; color: var(--slate-600);
+  padding-top: 8px; border-top: 1px dashed var(--slate-200);
+}
+.svc-meta .k { color: var(--slate-500); }
+.svc-meta .v { font-weight: 600; color: var(--slate-800); }
+.svc-meta .v.free { color: var(--green-700); }
+.svc-actions { display: flex; gap: 8px; }
+.svc-actions .btn { flex: 1; justify-content: center; }
+.svc-rating { font-size: 11.5px; color: var(--slate-500); }
+.svc-rating strong { color: var(--amber-700); font-weight: 700; }
+
+/* ───── Buttons (tối giản: bỏ shadow, bo nhỏ hơn) ───── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 4px;
+  font-weight: 600; font-size: 13.5px;
+  transition: background .15s, border-color .15s;
+  border: 1px solid transparent;
+}
+.btn-primary { background: var(--red-700); color: #fff; }
+.btn-primary:hover { background: var(--red-800); }
+.btn-secondary { background: #fff; color: var(--slate-700); border-color: var(--slate-300); }
+.btn-secondary:hover { border-color: var(--slate-500); }
+.btn-ghost { color: var(--slate-600); }
+.btn-ghost:hover { color: var(--red-700); }
+.btn-sm { padding: 5px 12px; font-size: 12.5px; }
+.btn-lg { padding: 11px 22px; font-size: 14.5px; }
+.btn-block { width: 100%; justify-content: center; }
+
+/* ───── Breadcrumb ───── */
+.crumb { font-size: 13px; color: var(--slate-500); margin-bottom: 12px; }
+.crumb a:hover { color: var(--red-700); }
+.crumb .sep { margin: 0 8px; color: var(--slate-300); }
+
+/* ───── Card (tối giản: bỏ shadow) ───── */
+.card { background: #fff; border: 1px solid var(--slate-200); border-radius: 6px; }
+.card-body { padding: 22px; }
+.card-header {
+  padding: 14px 22px; border-bottom: 1px solid var(--slate-200);
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.card-title {
+  margin: 0; font-size: 15px; font-weight: 700; color: var(--slate-900);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+
+/* ───── 6 mục chuẩn DVC ───── */
+.dvc-criteria {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border: 1px solid var(--slate-200); border-radius: var(--radius);
+  overflow: hidden;
+}
+.dvc-row {
+  padding: 14px 18px; border-bottom: 1px solid var(--slate-100);
+  display: flex; gap: 12px; background: #fff;
+}
+.dvc-row:nth-child(odd) { border-right: 1px solid var(--slate-100); }
+.dvc-row .lbl {
+  width: 140px; flex-shrink: 0; font-size: 12.5px; color: var(--slate-500);
+  font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+}
+.dvc-row .val { flex: 1; font-size: 13.5px; color: var(--slate-900); }
+.dvc-row .val strong { color: var(--red-700); }
+
+/* ───── DVCLT title banner (tối giản: nền xám, không kem vàng) ───── */
+.dvclt-banner {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: 6px;
+  padding: 22px 24px 18px;
+  text-align: center;
+}
+.dvclt-banner h1 {
+  font-size: 20px; font-weight: 700;
+  color: var(--slate-900); letter-spacing: .3px;
+  margin: 0;
+}
+.dvclt-banner .sub {
+  margin-top: 6px; font-size: 13px; color: var(--slate-600);
+}
+
+/* ───── Big numbered stepper (tối giản: chỉ viền đỏ khi active) ───── */
+.bigstep {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  margin: 22px 0;
+}
+.bs {
+  background: #fff; border: 1px solid var(--slate-200); border-radius: 6px;
+  padding: 12px 10px 10px; text-align: center; min-height: 90px;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  position: relative;
+}
+.bs .bs-num {
+  font-size: 22px; font-weight: 700;
+  color: var(--slate-400); line-height: 1;
+}
+.bs .bs-label { font-size: 12px; color: var(--slate-600); }
+.bs.active {
+  border-color: var(--red-700); border-width: 1px;
+  background: #FEF7F7;
+}
+.bs.active .bs-num   { color: var(--red-700); }
+.bs.active .bs-label { color: var(--slate-900); font-weight: 600; }
+.bs.done { background: var(--slate-50); }
+.bs.done .bs-num     { color: var(--slate-500); }
+.bs.done .bs-num::after { content: " ✓"; color: var(--slate-500); font-size: 14px; }
+.bs.done .bs-label   { color: var(--slate-600); }
+.bs + .bs::before {
+  content: ""; position: absolute; left: -5px; top: 50%;
+  width: 8px; height: 1px; background: var(--slate-300);
+}
+
+/* ───── Red section heading with horizontal line (DVCLT style) ───── */
+.dvclt-section-head {
+  display: flex; align-items: center; gap: 12px;
+  margin: 22px 0 14px;
+}
+.dvclt-section-head h3 {
+  margin: 0; font-size: 15.5px; font-weight: 700;
+  color: var(--red-700); letter-spacing: .2px;
+  white-space: nowrap;
+}
+.dvclt-section-head::after {
+  content: ""; flex: 1; height: 1px;
+  background: var(--red-300, #FCA5A5);
+}
+
+/* ───── Form field (tối giản: nền trắng, không vàng) ───── */
+.dvclt-field {
+  background: #fff; border: 1px solid var(--slate-300);
+  border-radius: 4px; padding: 6px 12px;
+  position: relative; margin-bottom: 12px;
+}
+.dvclt-field:focus-within { border-color: var(--red-700); }
+.dvclt-field > label {
+  font-size: 12.5px; color: var(--slate-600); font-weight: 500;
+  display: block; margin-bottom: 2px;
+}
+.dvclt-field > label .req { color: var(--red-700); margin-left: 2px; }
+.dvclt-field input, .dvclt-field select, .dvclt-field textarea {
+  width: 100%; padding: 4px 0; border: 0; outline: none;
+  background: transparent; font-size: 14px; color: var(--slate-900);
+}
+.dvclt-field.error { border-color: var(--red-700); border-width: 2px; }
+.dvclt-field-err {
+  color: var(--red-700); font-size: 12.5px; margin: -8px 0 12px 4px;
+}
+
+/* Required field marker — viền trái đỏ */
+.dvclt-field.required { border-left: 3px solid var(--red-700); }
+
+/* ───── DVCLT bottom action bar (centered) ───── */
+.dvclt-actions {
+  display: flex; justify-content: center; align-items: center; gap: 14px;
+  margin-top: 28px; padding-top: 22px;
+  border-top: 1px solid var(--slate-200);
+}
+.dvclt-actions .btn-text {
+  background: transparent; color: var(--slate-600);
+  padding: 10px 22px; font-weight: 600; font-size: 14px;
+}
+.dvclt-actions .btn-text:hover { color: var(--slate-900); }
+
+/* ───── Stepper (Tiếp nhận → Xử lý → Trả KQ) ───── */
+.stepper-h {
+  display: flex; align-items: center; gap: 0;
+  padding: 16px 0; max-width: 800px; margin: 0 auto;
+}
+.step {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  position: relative;
+}
+.step-circle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--slate-100); color: var(--slate-500);
+  display: grid; place-items: center; font-weight: 700; font-size: 16px;
+  border: 2px solid var(--slate-200); transition: all .2s;
+}
+.step.done .step-circle   { background: var(--green-500); color: #fff; border-color: var(--green-500); }
+.step.active .step-circle { background: var(--red-600); color: #fff; border-color: var(--red-600); box-shadow: 0 0 0 4px rgba(220,38,38,.15); }
+.step-label { font-size: 12.5px; color: var(--slate-500); font-weight: 600; text-align: center; }
+.step.done .step-label, .step.active .step-label { color: var(--slate-900); }
+.step-date { font-size: 11px; color: var(--slate-500); text-align: center; }
+.step + .step::before {
+  content: ""; position: absolute; left: -50%; right: 50%; top: 19px;
+  height: 2px; background: var(--slate-200);
+}
+.step.done + .step::before, .step.done + .step.active::before {
+  background: var(--green-500);
+}
+
+/* ───── Phiếu hẹn (tối giản: bỏ zigzag, viền đơn) ───── */
+.phieu-hen {
+  border: 1px solid var(--slate-300); border-radius: 6px;
+  background: #fff; position: relative; overflow: hidden;
+  border-top: 4px solid var(--red-700);
+}
+.phieu-hen-head {
+  text-align: center; padding: 24px 22px 12px;
+  border-bottom: 1px dashed var(--slate-300);
+}
+.phieu-hen-head .org { font-size: 12.5px; color: var(--slate-500); font-weight: 600; letter-spacing: .3px; }
+.phieu-hen-head .org strong { color: var(--red-700); }
+.phieu-hen-head h1 {
+  margin: 8px 0 4px; font-size: 22px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.phieu-hen-head .num { font-size: 13px; color: var(--slate-500); }
+.phieu-hen-head .num strong { color: var(--red-700); font-family: ui-monospace, Consolas, monospace; }
+
+.phieu-hen-body { padding: 22px; display: grid; grid-template-columns: 1fr 200px; gap: 24px; }
+.phieu-fields { display: flex; flex-direction: column; gap: 11px; }
+.phieu-field { display: flex; gap: 12px; font-size: 13.5px; }
+.phieu-field .k { width: 130px; flex-shrink: 0; color: var(--slate-500); font-weight: 600; }
+.phieu-field .v { flex: 1; color: var(--slate-900); font-weight: 600; }
+.phieu-field .v.big { font-size: 16px; color: var(--red-700); font-weight: 800; }
+
+.qr {
+  border: 1px solid var(--slate-200); padding: 8px;
+  background: #fff; text-align: center;
+}
+.qr svg { display: block; margin: 0 auto; }
+.qr .qr-cap { font-size: 11px; color: var(--slate-500); margin-top: 6px; }
+
+.phieu-foot {
+  padding: 14px 22px;
+  background: var(--slate-50); border-top: 1px solid var(--slate-200);
+  font-size: 12.5px; color: var(--slate-700);
+}
+.phieu-foot strong { color: var(--slate-900); }
+
+.phieu-actions {
+  display: flex; gap: 10px; justify-content: center;
+  margin-top: 18px; padding: 14px;
+  background: var(--slate-50); border-radius: var(--radius); border: 1px dashed var(--slate-200);
+}
+
+/* ───── Form ───── */
+.form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.form-row label { font-weight: 600; font-size: 13.5px; color: var(--slate-700); }
+.form-row .req { color: var(--red-600); margin-left: 2px; }
+.form-row .hint { font-size: 12px; color: var(--slate-500); }
+.input, .select, .textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--slate-200); border-radius: 8px;
+  background: var(--slate-50); color: var(--slate-900); outline: none;
+  font-size: 14px;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--red-500); background: #fff;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.12);
+}
+.textarea { min-height: 100px; resize: vertical; }
+.select { appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ───── Badge ───── */
+.badge { display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge.pending   { background: var(--amber-50);  color: var(--amber-700); }
+.badge.processing{ background: var(--blue-50);   color: var(--blue-700); }
+.badge.done      { background: var(--green-50);  color: var(--green-700); }
+.badge.late      { background: var(--red-50);    color: var(--red-700); }
+.badge.draft     { background: var(--slate-100); color: var(--slate-600); }
+
+/* ───── Lookup (tối giản: nền slate, không gradient) ───── */
+.lookup-card {
+  background: var(--slate-50); border: 1px solid var(--slate-200);
+  border-top: 4px solid var(--red-700);
+  border-radius: 6px; padding: 28px;
+  text-align: center;
+}
+.lookup-card h2 { margin: 0 0 4px; font-size: 18px; font-weight: 700; color: var(--slate-900); }
+.lookup-card p  { margin: 0 0 16px; font-size: 13.5px; color: var(--slate-600); }
+.lookup-form {
+  background: #fff; border: 1px solid var(--slate-300); border-radius: 4px;
+  padding: 3px; display: flex; gap: 0; max-width: 540px; margin: 0 auto;
+}
+.lookup-form input {
+  flex: 1; padding: 10px 14px; border: 0; outline: none;
+  font-size: 14px; font-family: ui-monospace, Consolas, monospace;
+  color: var(--slate-900); background: transparent;
+}
+.lookup-form button {
+  background: var(--red-700); color: #fff;
+  padding: 10px 20px; border-radius: 3px; font-weight: 600; font-size: 13.5px;
+}
+.lookup-form button:hover { background: var(--red-800); }
+
+/* ───── Charts (stats page) ───── */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 180px 1fr 60px; gap: 12px; align-items: center; }
+.bar-row .name { font-size: 13px; color: var(--slate-700); }
+.bar-track { background: var(--slate-100); border-radius: 999px; height: 10px; overflow: hidden; }
+.bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--red-500), var(--red-700));
+  border-radius: 999px; transition: width 1s;
+}
+.bar-row .val { font-size: 12.5px; color: var(--slate-600); font-weight: 600; text-align: right; }
+
+.donut { width: 140px; height: 140px; position: relative; }
+.donut svg { transform: rotate(-90deg); }
+.donut .donut-center {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  text-align: center;
+}
+.donut .donut-num { font-size: 22px; font-weight: 800; color: var(--slate-900); }
+.donut .donut-lbl { font-size: 11px; color: var(--slate-500); }
+
+/* ───── Footer ───── */
+.site-footer {
+  background: var(--slate-900); color: var(--slate-300);
+  margin-top: 32px; padding: 28px 24px 18px;
+}
+.footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 32px;
+}
+.footer-brand img { width: 56px; height: 56px; background: #fff; border-radius: 50%; padding: 2px; }
+.footer-brand h3 { margin: 12px 0 4px; color: #fff; font-size: 15px; }
+.footer-brand p  { font-size: 12.5px; opacity: .85; line-height: 1.6; }
+.footer-col h4 { color: #fff; font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .5px; }
+.footer-col a { display: block; font-size: 12.5px; padding: 3px 0; color: var(--slate-300); }
+.footer-col a:hover { color: #fff; }
+.footer-copy {
+  max-width: 1280px; margin: 18px auto 0; padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  font-size: 12px; text-align: center; opacity: .8;
+}
+
+/* ───── Utilities ───── */
+.hstack { display: flex; align-items: center; gap: 10px; }
+.vstack { display: flex; flex-direction: column; gap: 10px; }
+.muted { color: var(--slate-500); }
+.right { display: flex; justify-content: flex-end; gap: 10px; }
+.mt-2 { margin-top: 14px; }
+.mt-3 { margin-top: 22px; }
+.hidden { display: none !important; }
+.divider { height: 1px; background: var(--slate-200); margin: 14px 0; }
+
+@media (max-width: 1000px) {
+  .svc-grid { grid-template-columns: repeat(2, 1fr); }
+  .cats { grid-template-columns: repeat(3, 1fr); }
+  .stats-strip { grid-template-columns: repeat(2, 1fr); }
+  .stat-cell:nth-child(2) { border-right: 0; }
+  .footer-inner { grid-template-columns: 1fr; }
+  .phieu-hen-body { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .svc-grid { grid-template-columns: 1fr; }
+  .cats { grid-template-columns: repeat(2, 1fr); }
+  .stats-strip { grid-template-columns: 1fr; }
+  .stat-cell { border-right: 0 !important; border-bottom: 1px solid var(--slate-100); }
+  .stat-cell:last-child { border-bottom: 0; }
+  .brand-sub { display: none; }
+  .dvc-criteria { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
