@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Reports · VJU Public Service Portal</title>
+ <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
+ <style>
+  .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .kpi { background:#fff; border:1px solid var(--slate-200); border-radius:8px; padding:14px 16px; }
+  .kpi .lbl { font-size: 11.5px; color: var(--slate-500); text-transform: uppercase; letter-spacing:.4px; font-weight:700; }
+  .kpi .num { font-size: 24px; font-weight: 800; color: var(--slate-900); margin-top: 4px; }
+  .kpi .sub { font-size: 12px; color: var(--slate-500); margin-top: 2px; }
+  .rpt-grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:flex-start; }
+  .rpt-table { width:100%; border-collapse: collapse; }
+  .rpt-table th, .rpt-table td { padding: 8px 12px; font-size: 13px; text-align:left; border-bottom: 1px solid var(--slate-100); }
+  .rpt-table th { background: var(--slate-50); font-weight:700; font-size:11.5px; color: var(--slate-700); text-transform: uppercase; letter-spacing: .4px; }
+  .rpt-table td.num { text-align:right; font-weight:600; }
+  .rpt-table td.green { color: var(--green-700); }
+  .rpt-table td.red { color: var(--brand-red); }
+  @media (max-width: 720px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } .rpt-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 420px) { .kpi-strip { grid-template-columns: 1fr; } }
+ </style>
+</head>
+<body>
+<div id="site-shell"></div>
+<main class="page">
+ <div class="crumb"><a href="index.html">Home</a><span class="sep">›</span><a href="my-requests.html">My Requests</a><span class="sep">›</span><span>Reports</span></div>
+ <div class="hstack" style="justify-content:space-between; margin-bottom: 14px;">
+  <h1 style="margin: 0; font-size: 22px;">Reports</h1>
+  <div class="hstack">
+   <select class="select" style="width:auto;"><option>Last 30 days</option><option>Last quarter</option><option>This year</option></select>
+   <button class="btn btn-secondary btn-sm" onclick="toast('Export — demo only')">Export CSV</button>
+  </div>
+ </div>
+
+ <div class="kpi-strip">
+  <div class="kpi"><div class="lbl">Cases (30d)</div><div class="num">142</div><div class="sub">+12% vs prior</div></div>
+  <div class="kpi"><div class="lbl">On-time rate</div><div class="num">96%</div><div class="sub">SLA hit</div></div>
+  <div class="kpi"><div class="lbl">Median resolution</div><div class="num">1.4 d</div><div class="sub">Business days</div></div>
+  <div class="kpi"><div class="lbl">Overdue</div><div class="num" style="color: var(--brand-red);">3</div><div class="sub">Active</div></div>
+ </div>
+
+ <div class="rpt-grid">
+  <div class="card"><div class="card-body">
+   <h3 style="margin: 0 0 12px;">Team performance</h3>
+   <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;"><table class="rpt-table">
+    <thead><tr><th>Team</th><th class="num">Closed</th><th class="num">On-time %</th><th class="num">Avg days</th></tr></thead>
+    <tbody>
+     <tr><td>IT Office</td><td class="num">62</td><td class="num green">98%</td><td class="num">1.1</td></tr>
+     <tr><td>HR Office</td><td class="num">38</td><td class="num green">95%</td><td class="num">1.6</td></tr>
+     <tr><td>Academic Affairs</td><td class="num">28</td><td class="num">92%</td><td class="num">2.2</td></tr>
+     <tr><td>Finance</td><td class="num">14</td><td class="num red">86%</td><td class="num">3.0</td></tr>
+    </tbody>
+   </table></div>
+  </div></div>
+  <div class="card"><div class="card-body">
+   <h3 style="margin: 0 0 12px;">Member performance</h3>
+   <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;"><table class="rpt-table">
+    <thead><tr><th>Member</th><th class="num">Handled</th><th class="num">On-time %</th><th class="num">Avg hrs</th></tr></thead>
+    <tbody>
+     <tr><td>Phoebe Pham</td><td class="num">24</td><td class="num green">100%</td><td class="num">6.2</td></tr>
+     <tr><td>Brandon Tran</td><td class="num">22</td><td class="num green">98%</td><td class="num">7.8</td></tr>
+     <tr><td>Charles Le</td><td class="num">18</td><td class="num green">96%</td><td class="num">5.4</td></tr>
+     <tr><td>Tom Nguyen</td><td class="num">12</td><td class="num">88%</td><td class="num">12.0</td></tr>
+    </tbody>
+   </table></div>
+  </div></div>
+ </div>
+
+ <div class="card" style="margin-top: 18px;"><div class="card-body">
+  <h3 style="margin: 0 0 12px;">Cases per day (last 14 days)</h3>
+  <div style="display:flex; gap:6px; align-items:flex-end; height:120px;">
+   <div style="flex:1; background: var(--red-200); height: 30%;"></div>
+   <div style="flex:1; background: var(--red-200); height: 50%;"></div>
+   <div style="flex:1; background: var(--red-300, var(--red-500)); height: 40%; opacity:.6;"></div>
+   <div style="flex:1; background: var(--red-500); height: 70%;"></div>
+   <div style="flex:1; background: var(--red-500); height: 60%;"></div>
+   <div style="flex:1; background: var(--red-600); height: 90%;"></div>
+   <div style="flex:1; background: var(--red-600); height: 80%;"></div>
+   <div style="flex:1; background: var(--red-700); height: 100%;"></div>
+   <div style="flex:1; background: var(--red-600); height: 75%;"></div>
+   <div style="flex:1; background: var(--red-500); height: 55%;"></div>
+   <div style="flex:1; background: var(--red-500); height: 65%;"></div>
+   <div style="flex:1; background: var(--red-600); height: 85%;"></div>
+   <div style="flex:1; background: var(--red-700); height: 95%;"></div>
+   <div style="flex:1; background: var(--red-600); height: 70%;"></div>
+  </div>
+  <div style="font-size: 11px; color: var(--slate-500); text-align: center; margin-top: 8px;">Chart placeholder — would be a real chart library in production.</div>
+ </div></div>
+</main>
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>mountAuthLayout("my-requests");</script>
+</body>
+</html>

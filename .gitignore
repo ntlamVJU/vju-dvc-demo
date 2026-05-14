@@ -4,3 +4,7 @@ _research/
 __pycache__/
 .DS_Store
 Thumbs.db
+
+# Tailwind CLI standalone binary — too large for git (40MB). Download via README instructions.
+tools/tailwindcss.exe
+tools/tailwindcss-*

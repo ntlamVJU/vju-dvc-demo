@@ -1,123 +1,113 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
  <meta charset="utf-8" />
  <meta name="viewport" content="width=device-width,initial-scale=1" />
- <title>Hồ sơ của tôi · Cổng DVC VJU</title>
+ <title>My Requests · VJU Public Service Portal</title>
  <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
 </head>
 <body>
 <div id="site-shell"></div>
 
 <main class="page">
- <div class="crumb"><a href="index.html">Trang chủ</a> <span class="sep">›</span> <span>Hồ sơ của tôi</span></div>
+ <div class="crumb"><a href="index.html">Home</a><span class="sep">›</span><span>My Requests</span></div>
 
- <div class="section-head">
- <div>
- <h2>Hồ sơ của tôi</h2>
- <p>Theo dõi tất cả hồ sơ dịch vụ công bạn đã nộp</p>
- </div>
- <a class="btn btn-primary" href="services.html">+ Nộp hồ sơ mới</a>
- </div>
-
- <!-- ───── Quick stats ───── -->
- <div class="stats-strip" style="margin-bottom: 18px;">
- <div class="stat-cell"><div class="icon b"></div><div><div class="num" id="my-total">—</div><div class="lbl">Tổng hồ sơ</div></div></div>
- <div class="stat-cell"><div class="icon a"></div><div><div class="num" id="my-processing">—</div><div class="lbl">Đang xử lý</div></div></div>
- <div class="stat-cell"><div class="icon g"></div><div><div class="num" id="my-done">—</div><div class="lbl">Đã có kết quả</div></div></div>
- <div class="stat-cell"><div class="icon r"></div><div><div class="num" id="my-late">—</div><div class="lbl">Trễ hạn</div></div></div>
+ <div class="hstack" style="margin-bottom: 18px; justify-content: space-between;">
+  <h1 style="margin: 0; font-size: 22px; color: var(--slate-900);">My Requests</h1>
+  <div class="hstack">
+   <a class="btn btn-secondary btn-sm" href="reports.html">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Reports
+   </a>
+   <a class="btn btn-primary btn-sm" href="index.html#catalogue">+ New case</a>
+  </div>
  </div>
 
- <!-- ───── Filter tabs ───── -->
- <div class="card">
- <div class="card-header" style="padding: 12px 22px;">
- <div class="hstack" style="gap: 4px;">
- <button class="chip-tab on" data-f="all">Tất cả</button>
- <button class="chip-tab" data-f="processing">Đang xử lý</button>
- <button class="chip-tab" data-f="done">Đã trả KQ</button>
- <button class="chip-tab" data-f="late">Trễ hạn</button>
+ <div class="req-tabs" id="req-tabs"></div>
+
+ <div class="req-toolbar">
+  <div class="req-search">
+   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+   <input id="req-q" type="text" placeholder="Search by code, requester, or summary…" />
+  </div>
+  <div class="req-chips" id="req-chips"></div>
  </div>
- <a class="btn btn-secondary btn-sm" href="lookup.html">Tra cứu bằng mã</a>
- </div>
- <div class="card-body" id="my-list" style="padding: 14px;"></div>
- </div>
+
+ <div class="req-list" id="req-list"></div>
+ <p id="req-empty" class="muted hidden" style="text-align:center; padding: 28px;">No cases match the current filters.</p>
 </main>
-
-<style>.chip-tab { padding: 7px 14px; border-radius: 999px; background: var(--slate-100); color: var(--slate-700); font-size: 13px; font-weight: 600; }
- .chip-tab:hover { background: var(--slate-200); }
- .chip-tab.on { background: var(--red-50); color: var(--red-700); border: 1px solid var(--red-200); }
- .ho-so-card {
- border: 1px solid var(--slate-200); border-radius: 10px; padding: 18px;
- margin-bottom: 12px; background: #fff; transition: box-shadow .15s, border-color .15s;
- }
- .ho-so-card:hover { box-shadow: var(--shadow); border-color: var(--red-200); }</style>
 
 <script src="layout.js"></script>
 <script src="data.js"></script>
-<script>mountLayout("");
+<script>
+mountAuthLayout("my-requests");
 
-let filter = "all";
+let activeTab = "submitted";
+let activeStatus = "all";
+let query = "";
 
-function getList() {
- if (filter === "all") return SUBMITTED;
- return SUBMITTED.filter(r =>r.status === filter);
+const TABS = [
+  { id: "submitted", label: "Submitted by me",   getData: () => SUBMITTED },
+  { id: "inbox",     label: "Assigned to me",    getData: () => INBOX },
+];
+const STATUSES = [
+  { id: "all",        label: "All" },
+  { id: "processing", label: "In progress" },
+  { id: "late",       label: "Overdue" },
+  { id: "done",       label: "Completed" },
+];
+
+function renderTabs() {
+ document.getElementById("req-tabs").innerHTML = TABS.map(t =>
+  `<button class="req-tab ${t.id === activeTab ? 'active' : ''}" onclick="setTab('${t.id}')">${esc(t.label)} <span class="count">${t.getData().length}</span></button>`
+ ).join("");
 }
-
-function render() {
- const list = getList();
- const host = document.getElementById("my-list");
- if (list.length === 0) {
- host.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--slate-500);">Không có hồ sơ nào trong mục này.</div>`;
- return;
- }
- host.innerHTML = list.map(r =>{
- const s = r.service;
- const totalSteps = s.steps.length;
- const pct = Math.round((r.current_step / Math.max(1, totalSteps - 1)) * 100);
- const due = new Date(r.due_at);
- const daysLeft = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24));
- return `<div class="ho-so-card">
- <div style="display: grid; grid-template-columns: 1fr auto; gap: 18px; margin-bottom: 14px;">
- <div>
- <div class="hstack" style="gap: 10px; margin-bottom: 4px;">
- <span class="svc-code">${esc(r.code)}</span>${statusBadge(r.status)}</div>
- <div style="font-weight: 700; font-size: 15.5px; margin-top: 2px;">${esc(s.name)}</div>
- <div class="muted" style="font-size: 12.5px; margin-top: 2px;">${esc(s.agency)} · Mức ${s.muc}</div>
- </div>
- <div style="text-align: right;">
- <div class="muted" style="font-size: 11.5px;">Ngày nộp</div>
- <div style="font-weight: 600; font-size: 13px;">${fmtDate(r.submitted_at)}</div>
- <div class="muted" style="font-size: 11.5px; margin-top: 4px;">Hẹn trả</div>
- <div style="font-weight: 700; font-size: 13px; color: ${r.status === "late" ? "var(--red-700)" : r.status === "done" ? "var(--green-700)" : "var(--slate-900)"};">${fmtDate(r.due_at)}${r.status !== "done" && daysLeft >0 ? ` (còn ${daysLeft} ngày)` : r.status === "late" ? ` (trễ ${-daysLeft} ngày)` : ""}</div>
- </div>
- </div>
-
- <!-- Stepper -->
- <div class="stepper-h" style="padding: 8px 0; margin: 0;">${s.steps.map((st, i) =>`<div class="step ${i< r.current_step ? "done" : (i === r.current_step ? "active" : "")}">
- <div class="step-circle" style="width:28px; height:28px; font-size:12px;">${i + 1}</div>
- <div class="step-label" style="font-size: 11.5px;">${esc(st.name)}</div>
- </div>`).join("")}</div>
-
- <div class="hstack" style="margin-top: 14px; gap: 8px;">
- <a class="btn btn-primary btn-sm" href="lookup.html?code=${r.code}">Xem chi tiết</a>
- <button class="btn btn-secondary btn-sm">Tải phiếu hẹn</button>${r.status === "done" && !r.rating ? `<a class="btn btn-secondary btn-sm" href="rate.html?code=${r.code}">Đánh giá</a>` : ""}
- ${r.status === "processing" ? `<button class="btn btn-ghost btn-sm">Liên hệ cán bộ xử lý</button>` : ""}</div>
- </div>`;
+function renderChips() {
+ document.getElementById("req-chips").innerHTML = STATUSES.map(s =>
+  `<button class="req-chip ${s.id === activeStatus ? 'active' : ''}" onclick="setStatus('${s.id}')">${esc(s.label)}</button>`
+ ).join("");
+}
+function renderList() {
+ const data = TABS.find(t => t.id === activeTab).getData();
+ const qq = query.toLowerCase();
+ const list = data.filter(r => {
+  if (activeStatus !== "all" && r.status !== activeStatus) return false;
+  if (qq) {
+   const hay = (r.code + " " + r.requester.name + " " + (r.summary || "")).toLowerCase();
+   if (!hay.includes(qq)) return false;
+  }
+  return true;
+ });
+ const host = document.getElementById("req-list");
+ const empty = document.getElementById("req-empty");
+ empty.classList.toggle("hidden", list.length > 0);
+ host.innerHTML = list.map(r => {
+  const due = new Date(r.due_at);
+  const daysLeft = Math.ceil((due - new Date()) / 86400000);
+  const dueText = daysLeft < 0 ? `Overdue by ${-daysLeft} day${-daysLeft===1?"":"s"}`
+                 : daysLeft === 0 ? "Due today"
+                 : `${daysLeft} day${daysLeft===1?"":"s"} left`;
+  const isLate = r.status === "late";
+  return `<a class="req-row" data-status="${r.status}" href="case-detail.html?code=${r.code}">
+   <span class="req-status"></span>
+   <div class="req-body">
+    <div class="req-code">${esc(r.code)}</div>
+    <div class="req-title">${esc(r.summary || r.service.name)}</div>
+    <div class="req-meta">${esc(r.service.code)} · ${esc(r.service.name)} · ${esc(r.requester.name)}</div>
+   </div>
+   <div class="req-due ${isLate ? 'is-late' : ''}">${esc(statusLabel(r.status))}<br/><strong>${esc(dueText)}</strong></div>
+  </a>`;
  }).join("");
 }
+function setTab(id)    { activeTab = id;    renderTabs(); renderList(); }
+function setStatus(id) { activeStatus = id; renderChips(); renderList(); }
 
-// Stats
-document.getElementById("my-total").textContent = SUBMITTED.length;
-document.getElementById("my-processing").textContent = SUBMITTED.filter(r =>r.status === "processing" || r.status === "pending").length;
-document.getElementById("my-done").textContent = SUBMITTED.filter(r =>r.status === "done").length;
-document.getElementById("my-late").textContent = SUBMITTED.filter(r =>r.status === "late").length;
+document.getElementById("req-q").addEventListener("input", e => { query = e.target.value; renderList(); });
 
-document.querySelectorAll(".chip-tab").forEach(b =>b.addEventListener("click", () =>{
- document.querySelectorAll(".chip-tab").forEach(x =>x.classList.remove("on"));
- b.classList.add("on");
- filter = b.dataset.f;
- render();
-}));
-render();</script>
+renderTabs();
+renderChips();
+renderList();
+</script>
 </body>
 </html>

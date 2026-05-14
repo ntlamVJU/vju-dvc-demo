@@ -1,222 +1,163 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
  <meta charset="utf-8" />
  <meta name="viewport" content="width=device-width,initial-scale=1" />
- <title>Cổng Dịch vụ công Trường ĐH Việt Nhật</title>
+ <title>VJU Public Service Portal</title>
  <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
 </head>
 <body>
 <div id="site-shell"></div>
 
-<!-- ───── Hero search ───── -->
 <section class="hero">
  <div class="hero-inner">
- <h1>CỔNG DỊCH VỤ CÔNG VJU</h1>
- <p>Kết nối, cung cấp thông tin và dịch vụ công của Trường ĐH Việt Nhật — mọi lúc, mọi nơi</p>
- <form class="hero-search" onsubmit="event.preventDefault(); location.href='services.html';">
- <select>
- <option>Tất cả lĩnh vực</option>
- <option>Học vụ</option>
- <option>Tài chính</option>
- <option>Ký túc xá</option>
- <option>Học bổng</option>
- <option>Thực tập · Tốt nghiệp</option>
- </select>
- <input type="text" placeholder="Tìm dịch vụ công (vd: xác nhận sinh viên, miễn giảm học phí…)" />
- <button>Tìm kiếm</button>
- </form>
- <div class="hero-quicktabs">
- <a href="services.html">Dịch vụ công trực tuyến</a>
- <a href="lookup.html">Tra cứu hồ sơ</a>
- <a href="services.html">Dịch vụ nổi bật</a>
- <a href="#">Hỗ trợ trực tuyến</a>
- </div>
+  <h1>VJU PUBLIC SERVICE PORTAL</h1>
+  <p>Connecting students and staff with university services — anytime, anywhere</p>
+  <form class="hero-search" onsubmit="event.preventDefault(); jumpToCatalogue();">
+   <select id="hero-cat"><option value="">All categories</option></select>
+   <input id="hero-q" type="text" placeholder="Search a service (e.g. IT support, leave request…)" />
+   <button>Search</button>
+  </form>
+  <div class="hero-quicktabs">
+   <a href="#catalogue">Browse services</a>
+   <a href="help.html">User guide</a>
+   <a href="contact.html">Contact</a>
+  </div>
  </div>
 </section>
 
 <main class="page">
-
- <!-- ───── Public stats strip (live, công khai) ───── -->
  <div class="stats-strip">
- <div class="stat-cell">
- <div class="icon b"></div>
- <div><div class="num" id="s-total">—</div><div class="lbl">Hồ sơ tiếp nhận 30 ngày</div></div>
- </div>
- <div class="stat-cell">
- <div class="icon g"></div>
- <div><div class="num" id="s-ontime">—</div><div class="lbl">Tỷ lệ giải quyết đúng hạn</div></div>
- </div>
- <div class="stat-cell">
- <div class="icon a"></div>
- <div><div class="num" id="s-rating">—</div><div class="lbl">Đánh giá trung bình</div></div>
- </div>
- <div class="stat-cell">
- <div class="icon r"></div>
- <div><div class="num" id="s-svc">—</div><div class="lbl">Dịch vụ trực tuyến</div></div>
- </div>
+  <div class="stat-cell"><div><div class="num" id="s-total">—</div><div class="lbl">Cases received (last 30 days)</div></div></div>
+  <div class="stat-cell"><div><div class="num" id="s-ontime">—</div><div class="lbl">On-time resolution rate</div></div></div>
+  <div class="stat-cell"><div><div class="num" id="s-svc">—</div><div class="lbl">Services live</div></div></div>
+  <div class="stat-cell"><div><div class="num" id="s-roadmap">—</div><div class="lbl">On the rollout roadmap</div></div></div>
  </div>
 
- <!-- ───── 3 CTA tối giản: viền + chữ đỏ, không gradient ───── -->
- <section class="section">
- <div class="grid-2" style="grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 18px;">
- <a href="services.html" style="display:flex; gap:12px; align-items:center; padding:14px 16px; background:#fff; border:1px solid var(--slate-200); border-left:3px solid var(--red-700); border-radius:4px;">
- <div><div style="font-weight:700; font-size:14px; color: var(--red-700);">Dịch vụ công trực tuyến</div><div style="font-size:12.5px; color: var(--slate-600); margin-top:2px;">Nộp hồ sơ 24/7, nhận kết quả online</div></div>
- </a>
- <a href="lookup.html" style="display:flex; gap:12px; align-items:center; padding:14px 16px; background:#fff; border:1px solid var(--slate-200); border-left:3px solid var(--red-700); border-radius:4px;">
- <div><div style="font-weight:700; font-size:14px; color: var(--red-700);">Tra cứu hồ sơ</div><div style="font-size:12.5px; color: var(--slate-600); margin-top:2px;">Tra cứu bằng mã hồ sơ — không cần đăng nhập</div></div>
- </a>
- <a href="services.html" style="display:flex; gap:12px; align-items:center; padding:14px 16px; background:#fff; border:1px solid var(--slate-200); border-left:3px solid var(--red-700); border-radius:4px;">
- <div><div style="font-weight:700; font-size:14px; color: var(--red-700);">Dịch vụ nổi bật</div><div style="font-size:12.5px; color: var(--slate-600); margin-top:2px;">Top dịch vụ được dùng nhiều nhất tháng này</div></div>
- </a>
- </div>
- </section>
-
- <!-- ───── 2 cột danh mục theo đối tượng — đúng kiểu Cổng DVC QG ───── -->
- <section class="section">
- <div class="grid-2" style="gap: 24px;">
- <!-- Cột Sinh viên -->
- <div class="card">
- <div class="card-header">
- <h3 class="card-title">Sinh viên</h3>
- <span style="font-size:12.5px; color: var(--slate-500);">8 lĩnh vực · 24 dịch vụ</span>
- </div>
- <div class="card-body" id="cats-sv" style="padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 0;"></div>
- </div>
- <!-- Cột Cán bộ -->
- <div class="card">
- <div class="card-header">
- <h3 class="card-title">Cán bộ — viên chức</h3>
- <span style="font-size:12.5px; color: var(--slate-500);">4 lĩnh vực · 12 dịch vụ</span>
- </div>
- <div class="card-body" id="cats-cb" style="padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 0;"></div>
- </div>
- </div>
- </section>
-
- <!-- ───── Dịch vụ đang triển khai (đã chạy thật trên VJU Hub) ───── -->
- <section class="section">
- <div class="section-head">
- <div>
- <h2>Dịch vụ đang triển khai</h2>
- <p>Đã tích hợp với engine workflow Flowable của VJU Hub · Đang chạy thật</p>
- </div>
- <a href="services.html" class="link">Xem cả roadmap →</a>
- </div>
- <div id="top-services"></div>
- </section>
-
- <!-- ───── Thông báo + hướng dẫn (tối giản) ───── -->
- <section class="section">
- <div class="grid-2" style="gap: 18px;">
- <div class="card">
- <div class="card-header"><h3 class="card-title">Thông báo mới nhất</h3></div>
- <div class="card-body vstack" style="padding: 6px 16px 16px;">
- <a href="#" style="display:block; padding:11px 0; border-bottom:1px solid var(--slate-100);">
- <div style="font-weight:600; font-size:13.5px;">Triển khai dịch vụ công mức độ 4 cho thủ tục Cấp bảng điểm</div>
- <div class="muted" style="font-size:12px; margin-top:2px;">10/05/2026 · Phòng Đào tạo</div>
- </a>
- <a href="#" style="display:block; padding:11px 0; border-bottom:1px solid var(--slate-100);">
- <div style="font-weight:600; font-size:13.5px;">Cập nhật quy chế xét miễn, giảm học phí học kỳ Xuân 2026</div>
- <div class="muted" style="font-size:12px; margin-top:2px;">08/05/2026 · Phòng TC-KT</div>
- </a>
- <a href="#" style="display:block; padding:11px 0;">
- <div style="font-weight:600; font-size:13.5px;">Lịch nghỉ lễ và thông báo trực hỗ trợ trực tuyến</div>
- <div class="muted" style="font-size:12px; margin-top:2px;">05/05/2026 · VP Hiệu trưởng</div>
- </a>
- </div>
- </div>
- <div class="card">
- <div class="card-header"><h3 class="card-title">Hướng dẫn nhanh</h3></div>
- <div class="card-body vstack" style="padding: 6px 16px 16px; gap: 0;">
- <a href="#" style="display:block; padding:11px 0; border-bottom:1px solid var(--slate-100);">
- <div style="font-weight:600; font-size:13.5px;">1. Cách nộp hồ sơ trực tuyến</div>
- <div class="muted" style="font-size:12px;">Hướng dẫn từng bước · 3 phút đọc</div>
- </a>
- <a href="#" style="display:block; padding:11px 0; border-bottom:1px solid var(--slate-100);">
- <div style="font-weight:600; font-size:13.5px;">2. Cách tra cứu hồ sơ bằng mã</div>
- <div class="muted" style="font-size:12px;">Không cần đăng nhập</div>
- </a>
- <a href="#" style="display:block; padding:11px 0;">
- <div style="font-weight:600; font-size:13.5px;">3. Cách thanh toán lệ phí online</div>
- <div class="muted" style="font-size:12px;">Hỗ trợ VNPay, MoMo, chuyển khoản</div>
- </a>
- </div>
- </div>
- </div>
+ <section class="section" id="catalogue" style="scroll-margin-top: 80px;">
+  <div class="section-head">
+   <div>
+    <h2>Service catalogue</h2>
+    <p id="result-count">— matching services</p>
+   </div>
+  </div>
+  <div id="grouped"></div>
+  <div id="empty" class="card hidden" style="margin-top: 18px;">
+   <div class="card-body" style="text-align:center; padding: 40px;">
+    <p class="muted">No services match the current filters.</p>
+   </div>
+  </div>
  </section>
 </main>
 
 <script src="layout.js"></script>
 <script src="data.js"></script>
-<script>mountLayout("home");
+<script>
+mountLayout("home");
 
-// Stats
-document.getElementById("s-total").textContent = PUBLIC_STATS.total_30d.toLocaleString("vi-VN");
-document.getElementById("s-ontime").textContent = PUBLIC_STATS.on_time_pct + "%";
-document.getElementById("s-rating").textContent = PUBLIC_STATS.avg_rating + " / 5";
-document.getElementById("s-svc").textContent = PUBLIC_STATS.total_services;
+document.getElementById("s-total").textContent   = PUBLIC_STATS.total_30d.toLocaleString("en-US");
+document.getElementById("s-ontime").textContent  = PUBLIC_STATS.on_time_pct + "%";
+document.getElementById("s-svc").textContent     = PUBLIC_STATS.total_services;
+document.getElementById("s-roadmap").textContent = PUBLIC_STATS.roadmap_services;
 
-// Categories — 2 columns (tối giản, bỏ emoji icon)
-function renderCats(host, audience) {
- const cats = CATEGORIES.filter(c =>c.audience === audience || c.audience === "all");
- host.innerHTML = cats.map(c =>{
- const inCat = SERVICES.filter(s =>s.cat === c.id);
- const liveCount = inCat.filter(s =>s.deployed).length;
- const meta = liveCount >0
- ? `<div style="font-size:11.5px; color: var(--green-700); font-weight:600;">${liveCount}/${inCat.length} đang chạy</div>`
- : `<div class="muted" style="font-size:11.5px;">${inCat.length ? inCat.length + " dịch vụ · lộ trình" : "Đang chuẩn bị"}</div>`;
- return `<a href="services.html?cat=${c.id}" class="hstack" style="padding:9px 12px; border-radius:4px; gap:8px; transition:background .12s;" onmouseover="this.style.background='var(--slate-100)'" onmouseout="this.style.background=''">
- <div style="flex:1;">
- <div style="font-weight:600; font-size:13.5px; color:var(--slate-900);">${c.name}</div>${meta}</div>
- <div style="color:var(--slate-400); font-size:14px;">›</div>
- </a>`;
- }).join("");
-}
-renderCats(document.getElementById("cats-sv"), "sv");
-renderCats(document.getElementById("cats-cb"), "cb");
+const heroCat = document.getElementById("hero-cat");
+const heroQ   = document.getElementById("hero-q");
+const groupedHost = document.getElementById("grouped");
+const empty  = document.getElementById("empty");
+const cnt    = document.getElementById("result-count");
 
-// Group deployed services by category (đúng tinh thần Cổng DVC QG)
-const deployed = SERVICES.filter(s => s.deployed);
-const grouped = {};
-deployed.forEach(s => { (grouped[s.cat] = grouped[s.cat] || []).push(s); });
+heroCat.innerHTML = '<option value="">All categories</option>' +
+ CATEGORIES.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
 
-function svcCardHTML(s) {
-  return `
-    <a class="svc-card" href="service-detail.html?code=${s.code}">
-      <div class="svc-head">
-        <span class="svc-code">${s.code}</span>
-        ${mucBadge(s.muc)}
-      </div>
-      <div class="svc-name">${esc(s.name)}</div>
-      <div class="svc-desc">${esc(s.desc)}</div>
-      <div class="svc-meta">
-        <div class="k">Thời hạn</div><div class="v">${s.sla_days} ngày làm việc</div>
-        <div class="k">Phí</div><div class="v ${s.fee === 0 ? "free" : ""}">${feeText(s.fee)}</div>
-        <div class="k">Cơ quan</div><div class="v">${esc(s.agency)}</div>
-        <div class="k">Đánh giá</div><div class="svc-rating"><strong>${s.rating}</strong>/5 · ${s.reviews} lượt</div>
-      </div>
-      <div style="display:flex; align-items:center; gap:8px; padding: 6px 0; font-size:11.5px; color: var(--green-700);">
-        <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--green-500);"></span>
-        Đang chạy thật · BPMN <code style="font-size:11px;">${esc(s.bpmn)}</code>
-      </div>
-      <div class="svc-actions">
-        <span class="btn btn-secondary btn-sm" style="flex:1; justify-content:center;">Xem chi tiết</span>
-        <span class="btn btn-primary btn-sm" style="flex:1; justify-content:center;">Đăng ký</span>
-      </div>
-    </a>`;
+const params = new URLSearchParams(location.search);
+if (params.get("cat")) heroCat.value = params.get("cat");
+
+function jumpToCatalogue() {
+ render();
+ document.getElementById("catalogue").scrollIntoView({ behavior: "smooth" });
 }
 
-document.getElementById("top-services").innerHTML = CATEGORIES
-  .filter(c => grouped[c.id]?.length)
-  .map(c => `
-    <div style="margin-bottom: 22px;">
-      <div style="display:flex; align-items:baseline; gap:10px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid var(--brand-red);">
-        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--slate-900);">${esc(c.name)}</h3>
-        <span style="color: var(--slate-500); font-size: 12.5px;">${audienceLabel(c.audience)}</span>
-      </div>
-      <div class="svc-grid">${grouped[c.id].map(svcCardHTML).join("")}</div>
-    </div>`).join("");
+function dueHoursText(h) {
+ if (h == null) return "—";
+ if (h < 24) return h + " hour" + (h === 1 ? "" : "s");
+ const days = Math.round(h / 8);
+ return days + " business day" + (days === 1 ? "" : "s");
+}
+
+function renderCard(s) {
+ const live = s.deployed;
+ const me = getCurrentUser();
+ const canDeploy = canDeployService(s, me);
+ const statusBadge = live
+   ? `<span style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color: var(--green-700);"><span style="width:6px; height:6px; border-radius:50%; background: var(--green-500);"></span>Live</span>`
+   : `<span style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color: var(--slate-500);"><span style="width:6px; height:6px; border-radius:50%; background: var(--slate-400);"></span>Roadmap</span>`;
+ const cta = !live
+   ? `<span class="btn btn-secondary btn-sm" style="flex:1; justify-content:center; opacity:.6;">Coming soon</span>`
+   : (s.deployer_eligible
+       ? (canDeploy
+           ? `<span class="btn btn-primary btn-sm" style="flex:1; justify-content:center;">Deploy</span>`
+           : `<span class="btn btn-secondary btn-sm" style="flex:1; justify-content:center; opacity:.6;">Deployer only</span>`)
+       : `<span class="btn btn-primary btn-sm" style="flex:1; justify-content:center;">Apply</span>`);
+ const internalBadge = s.internal
+   ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; background:var(--violet-50); color:var(--violet-700); text-transform:uppercase; letter-spacing:.4px;">Internal</span>`
+   : "";
+ return `<a class="svc-card" href="service-detail.html?code=${s.code}" style="${live ? '' : 'opacity:.78;'}">
+   <div class="svc-head"><span class="svc-code">${s.code}</span>${internalBadge}</div>
+   <div class="svc-name">${esc(s.name)}</div>
+   <div class="svc-desc">${esc(s.desc)}</div>
+   <div class="svc-meta">
+    <div class="k">Expected deadline</div><div class="v">${dueHoursText(s.due_hours)}</div>
+    <div class="k">Handled by</div><div class="v">${esc(s.team)}</div>
+   </div>
+   <div style="padding: 4px 0;">${statusBadge}</div>
+   <div class="svc-actions">
+    <span class="btn btn-secondary btn-sm" style="flex:1; justify-content:center;">View details</span>
+    ${cta}
+   </div>
+  </a>`;
+}
+
+function render() {
+ const cat = heroCat.value;
+ const q = (heroQ.value || "").trim().toLowerCase();
+ const me = getCurrentUser();
+ const matches = SERVICES.filter(s => {
+  if (!canSeeService(s, me)) return false;
+  if (cat && s.cat !== cat) return false;
+  if (q && !(s.name + " " + s.code + " " + s.desc).toLowerCase().includes(q)) return false;
+  return true;
+ });
+ const dep = matches.filter(s => s.deployed).length;
+ const road = matches.length - dep;
+ cnt.innerHTML = `<strong>${dep}</strong> live · <strong>${road}</strong> on the roadmap`;
+ empty.classList.toggle("hidden", matches.length > 0);
+ const byCat = {};
+ matches.forEach(s => { (byCat[s.cat] = byCat[s.cat] || []).push(s); });
+ Object.values(byCat).forEach(arr =>
+  arr.sort((a, b) => (b.deployed === true) - (a.deployed === true))
+ );
+ groupedHost.innerHTML = CATEGORIES
+  .filter(c => byCat[c.id]?.length)
+  .map(c => {
+   const items = byCat[c.id];
+   const liveCnt = items.filter(s => s.deployed).length;
+   const tag = liveCnt > 0
+    ? `<span style="font-size:11.5px; color: var(--green-700); font-weight:600; padding: 2px 8px; background: var(--green-50); border-radius: 999px;">${liveCnt}/${items.length} live</span>`
+    : `<span style="font-size:11.5px; color: var(--slate-500); padding: 2px 8px; background: var(--slate-100); border-radius: 999px;">Roadmap</span>`;
+   return `<div style="margin-bottom: 28px;">
+    <div style="display:flex; align-items:baseline; gap:10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--brand-red);">
+     <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--slate-900);">${esc(c.name)}</h3>
+     <span style="flex:1;"></span>${tag}
+    </div>
+    <div class="svc-grid">${items.map(renderCard).join("")}</div>
+   </div>`;
+  }).join("");
+}
+
+heroCat.addEventListener("change", render);
+heroQ.addEventListener("input", render);
+render();
 </script>
 </body>
 </html>

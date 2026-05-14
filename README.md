@@ -1,49 +1,66 @@
-# Cổng dịch vụ công VJU — Demo HTML
+# VJU Public Service Portal — Static Demo
 
-Demo tinh thần "Cổng dịch vụ công" cho chức năng Request của VJU Hub.
+English public-service-portal mockup for VJU Hub Request refactor — Phase 1a (static HTML/CSS/JS, no React/Inertia, no build step required to view).
 
-**Mục tiêu:** Refactor giao diện Request → mang tinh thần dịch vụ công (theo mẫu [dichvucong.gov.vn](https://dichvucong.gov.vn)), giữ engine workflow Flowable phía sau.
+**Live demo:** GitHub Pages — see repo Settings → Pages, or open `index.html` directly in a browser.
 
-## Xem demo
+## Pages
 
-🌐 Live: được host trên GitHub Pages — link sẽ có trong phần Settings → Pages của repo.
+| Public (no sign-in) | Auth-gated (sign in first) |
+|---|---|
+| `index.html` — Home + service catalogue | `my-requests.html` — Submitted by me / Assigned to me |
+| `login.html` — OIDC stub (Continue with VJU) | `case-detail.html` — Chat-style timeline + slide-overs |
+| `service-detail.html` — Service flow + Apply/Deploy CTA | `deploy.html` — Deploy workflow to many recipients |
+| `submit-success.html` — Confirmation | `service-submit.html` — Apply form |
+| `help.html`, `contact.html` | `schedule.html`, `directory.html`, `reports.html` |
 
-Hoặc mở local: double-click `index.html`.
+## Stack
 
-## Cấu trúc
+- Plain HTML + plain CSS + vanilla JS (no React / Vue / Inertia / Bootstrap)
+- Google Fonts (Nunito) via CDN
+- Tailwind CSS via standalone CLI — utility classes on top of `styles.css` component layer
 
-- `index.html` — Trang chủ DVC (banner đỏ + search + 2 cột danh mục + stats công khai)
-- `services.html` — Danh mục dịch vụ công (group theo lĩnh vực, filter)
-- `service-detail.html` — Chi tiết thủ tục: 6 mục chuẩn Nghị định 42 + stepper "luồng tốt nhất"
-- `service-submit.html` — Nộp hồ sơ wizard 6 bước (style DVCLT)
-- `submit-success.html` — Phiếu hẹn nhận kết quả + QR code
-- `lookup.html` — Tra cứu hồ sơ công khai (không cần đăng nhập)
-- `my-requests.html` — Hồ sơ của tôi (stepper, không phải inbox)
-- `stats.html` — Thống kê công khai
+## Build (Tailwind)
 
-## Tích hợp với VJU Hub
+The Tailwind CLI binary `tools/tailwindcss.exe` is **not committed** (40 MB). Download it once:
 
-2 dịch vụ "Đang chạy thật" hiển thị mock của 2 workflow BPMN có sẵn trong VJU Hub:
+```powershell
+Invoke-WebRequest `
+  -Uri 'https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-windows-x64.exe' `
+  -OutFile 'tools/tailwindcss.exe'
+```
 
-| Mã | Tên | BPMN | Form gốc |
-|---|---|---|---|
-| TT-VJU-IT-01 | Hỗ trợ kỹ thuật & IT | `it-support` | `it-support-start-form.form` |
-| TT-VJU-NP-01 | Xin nghỉ phép / công tác | `attendance-request` | `attendance-request-start-form.form` |
+For Linux/Mac, get the matching binary from <https://github.com/tailwindlabs/tailwindcss/releases>.
 
-Mã thử cho trang Tra cứu:
-- `DVC-2026-001234` — IT Support đang xử lý
-- `DVC-2026-001198` — IT Support đã hoàn tất 5⭐
-- `DVC-2026-001150` — Nghỉ phép chờ duyệt
-- `DVC-2026-001102` — Đi công tác đã đồng bộ về VJU Attendance
+Then build the output CSS:
 
-## Palette
+```powershell
+./tools/tailwindcss.exe -c tailwind.config.js -i tailwind.input.css -o tailwind.output.css --minify
+```
 
-- Banner đỏ `#B91C1C` (đồng bộ logo VJU)
-- Primary terracotta `#CE7A58` (theo dichvucong.gov.vn)
-- Text navy `#1E2F41`
-- Background `#F5F5F5`
-- Font: Nunito
+Watch mode while editing:
 
-## Plan đầy đủ
+```powershell
+./tools/tailwindcss.exe -c tailwind.config.js -i tailwind.input.css -o tailwind.output.css --watch
+```
 
-Xem [`PLAN_request-dvc-refactor.md`](../PLAN_request-dvc-refactor.md) ở thư mục cha (4 phase: Demo → Backend → Frontend → Polish).
+`tailwind.output.css` IS committed so the demo works without running the build.
+
+## Data shape
+
+Mock data lives in `data.js`. Field shapes mirror real VJU Hub Laravel models for an eventual Phase 1b port:
+
+- `SERVICES` ↔ `workflows` (process_code, due_working_hours, team, deployer_eligible, internal)
+- `MOCK_USERS` ↔ `User` + `Workflow.deployers()` membership
+- `SUBMITTED` / `INBOX` ↔ `workflow_requests` + `workflow_tasks`
+- `DIRECTORY` ↔ `ContactDirectory/Index.tsx` sections → departments → employees
+- `WORK_SCHEDULES` ↔ `work_schedules` (schedule_type, tieu_de, start/end date+time, chu_tri, attendees)
+- `RECIPIENT_POOL` — pool for `DeployRequestRequest` recipient picker
+
+## Constitution
+
+This demo respects Constitution v1.1.0 Principle VI (public-service-portal UX): hồ-sơ-first landing, status timeline always visible, multi-step wizard, mã hồ sơ kiểu DVC. Tailwind was added later — Constitution amendment recorded separately.
+
+## Approval gate
+
+Each screen needs separate user approval before being ported to Phase 1b (React/Inertia integration into live VJU Hub).

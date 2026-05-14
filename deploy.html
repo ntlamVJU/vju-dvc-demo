@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Deploy workflow · VJU Public Service Portal</title>
+ <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
+ <style>
+  .rec-section { background:#fff; border:1px solid var(--slate-200); border-radius:8px; padding:18px; margin-bottom:18px; }
+  .rec-section h3 { margin:0 0 4px; font-size:15px; font-weight:700; display:inline-flex; align-items:center; gap:8px; }
+  .rec-hint { margin:0 0 14px; font-size:12.5px; color: var(--slate-500); }
+  .rec-search { position:relative; margin-bottom:10px; }
+  .rec-search svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); color: var(--slate-400); }
+  .rec-search input { width:100%; padding:9px 12px 9px 38px; border:1px solid var(--slate-300); border-radius:6px; font-size:14px; }
+  .rec-quick { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .rec-quick button { padding:5px 12px; border-radius:999px; background: var(--slate-100); color: var(--slate-700); font-size:12px; font-weight:600; }
+  .rec-quick button.primary { background: var(--red-50); color: var(--red-700); }
+  .rec-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; min-height:24px; }
+  .rec-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 4px 4px 10px; border-radius:999px; background: var(--red-50); color: var(--red-700); font-size:12.5px; font-weight:600; border:1px solid var(--red-200); }
+  .rec-chip button { width:18px; height:18px; border-radius:50%; background:transparent; color: var(--red-700); display:grid; place-items:center; }
+  .rec-list-meta { font-size:12px; color: var(--slate-600); margin-bottom:6px; display:flex; justify-content:space-between; }
+  .rec-list-meta button { font-size:12px; color: var(--red-700); font-weight:600; background:transparent; }
+  .rec-list { min-height:220px; max-height:360px; overflow-y:auto; border:1px solid var(--slate-300); border-radius:6px; background:#fff; }
+  .rec-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--slate-200); cursor:pointer; background:#fff; }
+  .rec-row:last-child { border-bottom:0; }
+  .rec-row:hover { background: var(--slate-50); }
+  .rec-row.selected { background: var(--red-50); }
+  .rec-row .meta { flex:1; min-width:0; }
+  .rec-row .name { font-weight:600; font-size:13.5px; color: var(--slate-900); }
+  .rec-row .sub { font-size:11.5px; color: var(--slate-500); }
+  .deploy-actions { background:#fff; border:1px solid var(--slate-200); border-radius:8px; padding:14px 18px; margin-bottom:18px; display:flex; gap:8px; justify-content:flex-end; align-items:center; }
+  .deploy-actions .hint { flex:1; font-size:12.5px; color: var(--slate-500); }
+  .deploy-actions .hint.warn { color: var(--red-700); font-weight:600; }
+  .btn-primary.is-disabled { opacity:.5; cursor:not-allowed; }
+  .deploy-layout { display:grid; grid-template-columns: 1fr 280px; gap:18px; align-items:flex-start; }
+  .deploy-summary { background:#fff; border:1px solid var(--slate-200); border-radius:8px; padding:16px; position:sticky; top:22px; }
+  .deploy-summary h4 { margin:0 0 10px; font-size:11.5px; color: var(--slate-500); text-transform: uppercase; letter-spacing:.3px; font-weight:700; }
+  .deploy-summary .ds-count { font-size:28px; font-weight:800; color: var(--red-700); line-height:1; margin-bottom:4px; }
+  .deploy-summary .ds-row { display:grid; grid-template-columns: 1fr auto; padding:9px 0; border-bottom:1px solid var(--slate-100); font-size:13px; }
+  @media (max-width: 1000px) {
+   .deploy-layout { grid-template-columns: 1fr; }
+   .deploy-summary { position: static; }
+  }
+  @media (max-width: 720px) { .rec-section { padding: 14px; } }
+  @media (max-width: 480px) {
+   .deploy-actions { flex-direction: column-reverse; align-items: stretch; }
+   .deploy-actions .btn { width:100%; justify-content:center; }
+   .deploy-actions .hint { text-align: center; }
+  }
+ </style>
+</head>
+<body>
+<div id="site-shell"></div>
+
+<main class="page">
+ <div class="crumb"><a href="index.html">Home</a><span class="sep">›</span><a id="bc-service" href="#">Service</a><span class="sep">›</span><span>Deploy</span></div>
+ <div id="root"></div>
+</main>
+
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>
+mountAuthLayout("");
+
+let selected = new Set();
+let query = "";
+
+const code = new URLSearchParams(location.search).get("code");
+const root = document.getElementById("root");
+const me = getCurrentUser();
+const s = code ? findService(code) : null;
+
+if (!s) {
+ root.innerHTML = `<div class="card"><div class="card-body" style="text-align:center; padding:40px;"><p class="muted">No service code provided. <a href="index.html#catalogue" style="color: var(--red-700);">Back to Home</a></p></div></div>`;
+} else if (!canDeployService(s, me)) {
+ root.innerHTML = `<div class="card"><div class="card-body" style="padding:24px;">
+  <strong>You are not authorised to deploy this workflow.</strong>
+  <p class="muted" style="margin-top:8px;">In VJU Hub the deployer set is per-workflow via <code>Workflow.deployers()</code>. Ask HR/IT to grant you deployer rights.</p>
+  <a class="btn btn-secondary btn-sm" href="service-detail.html?code=${esc(s.code)}">← Back to service</a>
+ </div></div>`;
+} else {
+ document.title = "Deploy: " + s.name;
+ document.getElementById("bc-service").href = "service-detail.html?code=" + s.code;
+ document.getElementById("bc-service").textContent = s.name;
+ renderDeployForm();
+}
+
+function dueHoursText(h) {
+ if (h == null) return "—";
+ if (h < 24) return h + "h";
+ return Math.round(h / 8) + " business day" + (Math.round(h/8) === 1 ? "" : "s");
+}
+
+function renderDeployForm() {
+ root.innerHTML = `
+  <div class="dvclt-banner" style="margin-bottom:18px;">
+   <h1>DEPLOY: ${esc(s.name.toUpperCase())}</h1>
+   <div class="sub">Service code <strong style="color: var(--red-700); font-family: ui-monospace, Consolas, monospace;">${esc(s.code)}</strong> · ${esc(s.team)} · Expected deadline ${esc(dueHoursText(s.due_hours))} per recipient</div>
+  </div>
+  <div class="deploy-layout">
+   <div>
+    <div class="rec-section">
+     <h3>Recipients <span class="req">*</span></h3>
+     <p class="rec-hint">Pick who receives this workflow. One workflow request will be created per recipient (mirrors <code>DeployRequestRequest</code>).</p>
+     <div class="rec-quick" id="rec-quick"></div>
+     <div class="rec-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="rec-q" type="text" placeholder="Search by name, email, department…" oninput="query = this.value; renderRecList();" />
+     </div>
+     <div class="rec-chips" id="rec-chips"></div>
+     <div class="rec-list-meta" id="rec-list-meta"></div>
+     <div class="rec-list" id="rec-list"></div>
+    </div>
+    <div class="rec-section">
+     <h3>Workflow start data</h3>
+     <p class="rec-hint">Stored on every workflow_request created by this deploy. Prefill the start form for each recipient.</p>
+     <div id="form-fields">${renderFormFields()}</div>
+    </div>
+    <div class="rec-section">
+     <h3>Message to recipients</h3>
+     <p class="rec-hint">Optional — short note shown to each recipient.</p>
+     <textarea class="textarea" id="deploy-message" placeholder="Brief instructions…"></textarea>
+    </div>
+    <div class="deploy-actions">
+     <div class="hint" id="deploy-hint">Select at least one recipient to enable Deploy.</div>
+     <a class="btn btn-secondary" href="service-detail.html?code=${esc(s.code)}">Cancel</a>
+     <button class="btn btn-primary is-disabled" id="btn-deploy" onclick="submitDeploy()">
+      <span id="submit-label">Deploy now</span>
+     </button>
+    </div>
+   </div>
+   <aside class="deploy-summary">
+    <h4>Deploy summary</h4>
+    <div class="ds-count" id="ds-count">0</div>
+    <div style="font-size:12px; color: var(--slate-500); margin-bottom:10px;">recipient(s) selected</div>
+    <div class="ds-row"><div>Service</div><div style="font-weight:600;">${esc(s.code)}</div></div>
+    <div class="ds-row"><div>Handled by</div><div>${esc(s.team)}</div></div>
+    <div class="ds-row"><div>Per-recipient deadline</div><div>${esc(dueHoursText(s.due_hours))}</div></div>
+    <div class="ds-row" style="border-bottom:0;"><div>Workflow</div><div style="font-family: ui-monospace, Consolas, monospace; font-size:12px;">${esc(s.bpmn || "—")}</div></div>
+   </aside>
+  </div>`;
+ renderRecQuick();
+ renderRecList();
+ renderChips();
+ updateCount();
+}
+
+function renderFormFields() {
+ const fields = s.fields || [];
+ if (!fields.length) return `<p class="muted">No form fields defined.</p>`;
+ return fields.map(f => {
+  const req = f.required ? '<span class="req">*</span>' : '';
+  if (f.type === "textarea") return `<div class="form-row"><label>${esc(f.label)} ${req}</label><textarea class="textarea" id="df-${f.key}"></textarea></div>`;
+  if (f.type === "select")   return `<div class="form-row"><label>${esc(f.label)} ${req}</label><select class="select" id="df-${f.key}"><option value="">— Select —</option>${(f.options||[]).map(o=>`<option>${esc(o)}</option>`).join("")}</select></div>`;
+  return `<div class="form-row"><label>${esc(f.label)} ${req}</label><input class="input" type="text" id="df-${f.key}" /></div>`;
+ }).join("");
+}
+function renderRecQuick() {
+ const depts = [...new Set(RECIPIENT_POOL.map(u => u.department).filter(Boolean))];
+ document.getElementById("rec-quick").innerHTML =
+  depts.map(d => `<button onclick="quickPickDept('${esc(d)}')">${esc(d)}</button>`).join("") +
+  `<button class="primary" onclick="quickPickAll()">All staff &amp; students</button>` +
+  `<button onclick="clearAll()">Clear</button>`;
+}
+function renderRecList() {
+ const qq = (query || "").toLowerCase().trim();
+ const list = RECIPIENT_POOL.filter(u => !qq || ((u.name||"") + " " + (u.email||"") + " " + (u.department||"")).toLowerCase().includes(qq));
+ const meta = document.getElementById("rec-list-meta");
+ const host = document.getElementById("rec-list");
+ const allSelected = list.length > 0 && list.every(u => selected.has(u.id));
+ meta.innerHTML = `<span>${list.length} of ${RECIPIENT_POOL.length} ${qq ? `matching "${esc(query)}"` : "available"}</span>
+  ${list.length ? `<button onclick="${allSelected ? 'deselectVisible()' : 'selectVisible()'}">${allSelected ? 'Deselect visible' : 'Select all visible'}</button>` : ""}`;
+ if (!list.length) {
+  host.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:220px; padding:24px; text-align:center; color: var(--slate-500);">
+   <strong style="color: var(--slate-700); font-size:14px;">No people match "${esc(query)}"</strong>
+   <p style="margin:6px 0 10px;">Try a different keyword.</p>
+   <button class="btn btn-secondary btn-sm" onclick="clearSearch()">Clear search</button>
+  </div>`;
+  return;
+ }
+ host.innerHTML = list.map(u => {
+  const sel = selected.has(u.id);
+  return `<div class="rec-row ${sel?'selected':''}" role="button" tabindex="0" onclick="toggleRec(${u.id})">
+   <input type="checkbox" ${sel?'checked':''} tabindex="-1" onclick="event.stopPropagation(); toggleRec(${u.id})" />
+   <div class="meta">
+    <div class="name">${esc(u.name)}</div>
+    <div class="sub">${esc(u.email)}${u.department?` · ${esc(u.department)}`:""}</div>
+   </div>
+  </div>`;
+ }).join("");
+}
+function renderChips() {
+ const host = document.getElementById("rec-chips");
+ if (!selected.size) { host.innerHTML = `<span class="muted" style="font-size:12.5px; font-style:italic;">Selected recipients will appear here.</span>`; return; }
+ host.innerHTML = [...selected].map(id => {
+  const u = RECIPIENT_POOL.find(x => x.id === id);
+  return u ? `<span class="rec-chip">${esc(u.name)}<button onclick="toggleRec(${id})">×</button></span>` : "";
+ }).join("");
+}
+function updateCount() {
+ const n = selected.size;
+ document.getElementById("ds-count").textContent = n;
+ document.getElementById("submit-label").textContent = n === 0 ? "Deploy now" : `Deploy to ${n} recipient${n===1?"":"s"}`;
+ const btn = document.getElementById("btn-deploy");
+ const hint = document.getElementById("deploy-hint");
+ if (n === 0) { btn.classList.add("is-disabled"); hint.textContent = "Select at least one recipient to enable Deploy."; hint.classList.remove("warn"); }
+ else { btn.classList.remove("is-disabled"); hint.textContent = `Ready to create ${n} workflow request${n===1?"":"s"}.`; hint.classList.remove("warn"); }
+}
+function toggleRec(id) { if (selected.has(id)) selected.delete(id); else selected.add(id); renderRecList(); renderChips(); updateCount(); }
+function quickPickDept(d) { RECIPIENT_POOL.filter(u => u.department === d).forEach(u => selected.add(u.id)); renderRecList(); renderChips(); updateCount(); }
+function quickPickAll() { RECIPIENT_POOL.forEach(u => selected.add(u.id)); renderRecList(); renderChips(); updateCount(); }
+function clearAll() { selected.clear(); renderRecList(); renderChips(); updateCount(); }
+function clearSearch() { query = ""; const inp = document.getElementById("rec-q"); if (inp) inp.value = ""; renderRecList(); }
+function selectVisible() {
+ const qq = (query||"").toLowerCase().trim();
+ RECIPIENT_POOL.forEach(u => { const hay = ((u.name||"")+" "+(u.email||"")+" "+(u.department||"")).toLowerCase(); if (!qq || hay.includes(qq)) selected.add(u.id); });
+ renderRecList(); renderChips(); updateCount();
+}
+function deselectVisible() {
+ const qq = (query||"").toLowerCase().trim();
+ RECIPIENT_POOL.forEach(u => { const hay = ((u.name||"")+" "+(u.email||"")+" "+(u.department||"")).toLowerCase(); if (!qq || hay.includes(qq)) selected.delete(u.id); });
+ renderRecList(); renderChips(); updateCount();
+}
+function submitDeploy() {
+ if (selected.size === 0) { toast("Select at least one recipient first.", "error"); return; }
+ const n = selected.size;
+ toast(`Deployed "${s.name}" to ${n} recipient${n===1?"":"s"} — demo only.`, "success");
+ setTimeout(() => { location.href = "my-requests.html"; }, 1400);
+}
+</script>
+</body>
+</html>

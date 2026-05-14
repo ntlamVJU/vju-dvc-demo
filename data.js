@@ -1,461 +1,493 @@
-// Mock services catalog — based on the spirit of dichvucong.gov.vn (chuẩn Nghị định 42/2022)
+// Mock data for the VJU Public Service Portal demo.
+// Field shapes mirror the real VJU Hub Laravel models so the demo can be ported later:
+//   • SERVICES   -> Workflow (process_code, process_code_prefix, due_working_hours, team, etc.)
+//   • INBOX/SUBMITTED -> WorkflowRequest + workflow_tasks
+//   • MOCK_USERS -> User + role + Workflow.deployers() membership
+// Anything not present in VJU Hub is annotated "demo only".
 
-// Mức độ DVC: 1 = chỉ thông tin, 2 = tải biểu mẫu, 3 = nộp online, 4 = nộp + nhận KQ online
-
+// ─────────────────────────────────────────────────────────────
+// Service categories (mirrors workflow_categories.name).
+// ─────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  // Đã triển khai trên VJU Hub (Flowable engine)
-  { id: "it-support",   name: "Hỗ trợ kỹ thuật & IT",       audience: "all" },
-  { id: "nghi-phep",    name: "Nghỉ phép · Công tác",       audience: "cb" },
-  // Đang chuẩn bị
-  { id: "hoc-vu",       name: "Học vụ",                     audience: "sv" },
-  { id: "tai-chinh",    name: "Tài chính · Học phí",        audience: "sv" },
-  { id: "ktx",          name: "Ký túc xá",                  audience: "sv" },
-  { id: "khieu-nai",    name: "Khiếu nại · Phản ánh",       audience: "all" },
+  { id: "it",      name: "IT & Technical Support" },
+  { id: "hr",      name: "HR · Leave & Travel" },
+  { id: "academic",name: "Academic Affairs" },
+  { id: "finance", name: "Finance & Tuition" },
+  { id: "internal",name: "Internal Workflows" },
 ];
 
+// ─────────────────────────────────────────────────────────────
+// Services. Flags:
+//   deployed          true  = live on portal (clickable)
+//                     false = on the roadmap (greyed out)
+//   deployer_eligible true  = workflow can be deployed to many (HR-style mass deploy)
+//   internal          true  = hidden from non-deployers (workflow_categories internal flag)
+// ─────────────────────────────────────────────────────────────
 const SERVICES = [
-  // ═══════════════════════════════════════════════════════════════════
-  // ✅ ĐÃ TRIỂN KHAI TRÊN VJU HUB — chạy thật trên Flowable engine
-  // ═══════════════════════════════════════════════════════════════════
-
-  // ─── IT Support (tích hợp từ VJU Hub `it-support` BPMN) ───
   {
-    code: "TT-VJU-IT-01",
-    name: "Yêu cầu hỗ trợ kỹ thuật (IT Support)",
-    cat: "it-support", audience: "all",
-    muc: 4, sla_days: 3, fee: 0, agency: "Tổ Công nghệ thông tin",
-    rating: 4.8, reviews: 156, used_30d: 198,
+    code: "VJU-IT-01",
+    name: "IT Support request",
+    cat: "it",
+    desc: "Report a hardware, software, network or A/V issue. Priority-based SLA.",
+    team: "IT Office", due_hours: 24,
     deployed: true, bpmn: "it-support",
-    desc: "Gửi yêu cầu hỗ trợ kỹ thuật cho phần cứng (laptop, máy in, máy chiếu…), phần mềm (website, hệ thống), mạng/Internet, hoặc hỗ trợ sự kiện. Tích hợp SLA tự động theo mức ưu tiên.",
-    legal: "Quy định hỗ trợ CNTT nội bộ VJU 2025",
-    docs: [
-      { name: "Mô tả chi tiết sự cố (ảnh chụp màn hình nếu có)", required: false, has_template: false },
-    ],
+    deployer_eligible: false, internal: false,
     steps: [
-      { name: "Người yêu cầu gửi", actor: "Người dùng",          current: true },
-      { name: "Phân công agent",   actor: "Hệ thống DMN",         duration: "tức thì" },
-      { name: "Xử lý sự cố",       actor: "Chuyên viên IT",       duration: "0,5–7 ngày (theo mức ưu tiên)" },
-      { name: "Người yêu cầu xác nhận", actor: "Người yêu cầu",   duration: "1 ngày" },
-      { name: "Hoàn tất / Eskalate Team Leader", actor: "TL CNTT",duration: "(nếu cần)" },
+      { name: "Request submitted", actor: "Requester" },
+      { name: "Routing", actor: "System (DMN)" },
+      { name: "Handle issue", actor: "IT Office" },
+      { name: "Requester confirmation", actor: "Requester" },
+      { name: "Close / escalate", actor: "Team Lead" },
     ],
     fields: [
-      { key: "title", label: "Tiêu đề sự cố", type: "text", required: true, placeholder: "Mô tả ngắn gọn vấn đề" },
-      { key: "category", label: "Lĩnh vực sự cố", type: "select", required: true, options: [
-        "Phần cứng (Laptop, máy in, máy chiếu…)",
-        "Phần mềm (Website, hệ thống…)",
-        "Mạng / Internet",
-        "Hỗ trợ truyền thông / sự kiện",
-        "Khác",
-      ]},
-      { key: "priority", label: "Mức ưu tiên (SLA dự kiến)", type: "select", required: true, options: [
-        "Thấp (7 ngày làm việc)",
-        "Trung bình (3 ngày làm việc)",
-        "Cao (1 ngày làm việc)",
-        "Khẩn cấp (0,5 ngày làm việc)",
-        "Thủ công — chọn deadline",
-      ]},
-      { key: "description", label: "Mô tả chi tiết", type: "textarea", required: true, placeholder: "Mô tả sự cố, các bước đã thử…" },
-      { key: "ck_restart", label: "Tôi đã thử khởi động lại thiết bị / ứng dụng", type: "select", required: true, options: ["Có", "Không áp dụng"] },
-      { key: "ck_guide", label: "Tôi đã tham khảo tài liệu hướng dẫn có sẵn", type: "select", required: true, options: ["Có", "Không áp dụng"] },
+      { key: "title", label: "Title", type: "text", required: true, placeholder: "Short summary" },
+      { key: "category", label: "Issue category", type: "select", required: true,
+        options: ["Hardware", "Software", "Network", "A/V & events", "Other"] },
+      { key: "priority", label: "Priority", type: "select", required: true,
+        options: ["Low", "Medium", "High", "Urgent"] },
+      { key: "description", label: "Details", type: "textarea", required: true },
     ],
   },
-
-  // ─── Xin nghỉ phép (tích hợp từ VJU Hub `attendance-request` BPMN) ───
   {
-    code: "TT-VJU-NP-01",
-    name: "Đơn xin nghỉ phép / công tác / làm việc từ xa",
-    cat: "nghi-phep", audience: "cb",
-    muc: 4, sla_days: 2, fee: 0, agency: "Phòng Tổ chức Cán bộ + Quản lý trực tiếp",
-    rating: 4.7, reviews: 312, used_30d: 142,
+    code: "VJU-LV-01",
+    name: "Leave / Business Trip / Remote Work Request",
+    cat: "hr",
+    desc: "Apply for annual leave, sick leave, business trip, or remote-work request. Syncs to VJU Attendance.",
+    team: "HR Office + Direct Manager", due_hours: 16,
     deployed: true, bpmn: "attendance-request",
-    desc: "Cán bộ, viên chức gửi đơn xin nghỉ phép (phép năm, ốm, không lương, thai sản…), đi công tác, làm việc online hoặc tại cơ sở Mỹ Đình. Kết quả duyệt được đồng bộ tự động về hệ thống VJU Attendance.",
-    legal: "Bộ Luật Lao động 2019 + Quy chế nội bộ VJU 2024",
-    docs: [
-      { name: "Giấy tờ minh chứng (giấy nghỉ ốm, vé máy bay…)", required: false, has_template: false },
-    ],
+    deployer_eligible: false, internal: false,
     steps: [
-      { name: "Cán bộ gửi đơn",              actor: "Cán bộ",          current: true },
-      { name: "Quản lý trực tiếp duyệt",     actor: "Quản lý",         duration: "1 ngày" },
-      { name: "Cán bộ chỉnh sửa (nếu cần)",  actor: "Cán bộ",          duration: "(tuỳ)" },
-      { name: "Đồng bộ sang VJU Attendance", actor: "Hệ thống vệ tinh", duration: "tức thì" },
+      { name: "Staff submits request", actor: "Staff" },
+      { name: "Manager review", actor: "Direct Manager" },
+      { name: "Staff revision", actor: "Staff" },
+      { name: "Sync to VJU Attendance", actor: "Satellite" },
     ],
     fields: [
-      { key: "title", label: "Tiêu đề đơn", type: "text", required: true, placeholder: "VD: Nghỉ phép năm tuần 10/03" },
-      { key: "arrangement_type", label: "Hình thức nghỉ / sắp xếp công việc", type: "select", required: true, options: [
-        "Làm việc online (không nghỉ)",
-        "Làm việc tại cơ sở Mỹ Đình (không nghỉ)",
-        "Nghỉ phép năm",
-        "Nghỉ ốm",
-        "Nghỉ không lương",
-        "Nghỉ thai sản",
-        "Đi công tác",
-        "Nghỉ khác",
-      ]},
-      { key: "start_date", label: "Từ ngày & giờ",  type: "date", required: true },
-      { key: "end_date",   label: "Đến ngày & giờ", type: "date", required: true },
-      { key: "reason", label: "Ghi chú gửi quản lý", type: "textarea", placeholder: "Bối cảnh, người bàn giao công việc…" },
-    ],
-  },
-
-  // ═══════════════════════════════════════════════════════════════════
-  // 📋 ROADMAP — Workflow đề xuất triển khai tiếp (mock, "Đang chuẩn bị")
-  // ═══════════════════════════════════════════════════════════════════
-
-  // ─── Học vụ (đề xuất) ───
-  {
-    code: "TT-VJU-HV-01",
-    name: "Cấp giấy xác nhận sinh viên",
-    deployed: false,
-    cat: "hoc-vu", audience: "sv",
-    muc: 4,
-    sla_days: 2,
-    fee: 0,
-    agency: "Phòng Đào tạo",
-    rating: 4.8, reviews: 234, used_30d: 312,
-    desc: "Cấp giấy xác nhận sinh viên đang theo học tại trường để làm thủ tục vay vốn ngân hàng chính sách, xin việc làm thêm, xin visa du học hoặc các mục đích khác.",
-    legal: "Quyết định số 123/QĐ-VJU ngày 15/01/2026 của Hiệu trưởng",
-    docs: [
-      { name: "Đơn đề nghị xác nhận sinh viên", required: true, has_template: true },
-      { name: "Bản chụp CCCD/CMND", required: true, has_template: false },
-      { name: "Giấy giới thiệu của cơ quan nơi cần xác nhận (nếu có)", required: false, has_template: false },
-    ],
-    steps: [
-      { name: "Sinh viên nộp hồ sơ", actor: "Sinh viên", duration: "—", current: true },
-      { name: "Tiếp nhận & kiểm tra", actor: "Bộ phận Một cửa P. Đào tạo", duration: "0,5 ngày" },
-      { name: "Trưởng phòng duyệt & ký", actor: "Trưởng Phòng Đào tạo",   duration: "1 ngày" },
-      { name: "Trả kết quả",             actor: "Bộ phận Một cửa",         duration: "0,5 ngày" },
-    ],
-    fields: [
-      { key: "muc_dich",  label: "Mục đích xin xác nhận", type: "select", required: true,
-        options: ["Vay vốn ngân hàng chính sách", "Xin việc làm thêm", "Làm visa du học", "Mua vé tàu/xe ưu đãi", "Khác"] },
-      { key: "so_ban",    label: "Số bản cần cấp", type: "number", required: true, placeholder: "vd: 2" },
-      { key: "ngon_ngu",  label: "Ngôn ngữ", type: "select", required: true, options: ["Tiếng Việt", "Tiếng Anh", "Song ngữ"] },
-      { key: "ghi_chu",   label: "Ghi chú thêm", type: "textarea" },
+      { key: "kind", label: "Request type", type: "select", required: true,
+        options: ["Annual leave", "Sick leave", "Unpaid leave", "Business trip", "Remote work"] },
+      { key: "from", label: "From", type: "text", required: true, placeholder: "YYYY-MM-DD" },
+      { key: "to",   label: "To",   type: "text", required: true, placeholder: "YYYY-MM-DD" },
+      { key: "reason", label: "Reason", type: "textarea", required: true },
     ],
   },
   {
-    code: "TT-VJU-HV-02",
-    name: "Cấp bảng điểm tích lũy",
-    cat: "hoc-vu", audience: "sv",
-    muc: 4, sla_days: 3, fee: 20000, agency: "Phòng Đào tạo",
-    rating: 4.7, reviews: 412, used_30d: 287,
-    desc: "Cấp bảng điểm tích lũy chính thức có đóng dấu, dùng để nộp hồ sơ chuyển trường, du học, xin học bổng, xin việc.",
-    legal: "Quyết định số 124/QĐ-VJU ngày 15/01/2026 của Hiệu trưởng",
-    docs: [
-      { name: "Đơn đề nghị cấp bảng điểm", required: true, has_template: true },
-      { name: "Biên lai nộp lệ phí (nếu nộp trực tiếp)", required: false, has_template: false },
-    ],
+    code: "VJU-AC-01",
+    name: "Student academic transcript request",
+    cat: "academic",
+    desc: "Request an official transcript of academic results (digital or printed copy).",
+    team: "Office of Academic Affairs", due_hours: 40,
+    deployed: false, bpmn: null,
+    deployer_eligible: false, internal: false,
+    steps: [{ name: "Submitted", actor: "Student" }, { name: "Issued", actor: "Academic Affairs" }],
+    fields: [],
+  },
+  {
+    code: "VJU-FN-01",
+    name: "Tuition fee receipt re-issuance",
+    cat: "finance",
+    desc: "Request a re-issued tuition receipt for completed payments.",
+    team: "Finance Office", due_hours: 48,
+    deployed: false, bpmn: null,
+    deployer_eligible: false, internal: false,
+    steps: [{ name: "Submitted", actor: "Student" }, { name: "Reviewed", actor: "Finance" }],
+    fields: [],
+  },
+  // ─── Internal workflows (hidden from non-deployer public) ───
+  {
+    code: "VJU-IN-01",
+    name: "Annual policy acknowledgement",
+    cat: "internal",
+    desc: "Internal workflow: HR deploys annual policy text to all staff for acknowledgement.",
+    team: "HR Office", due_hours: 120,
+    deployed: true, bpmn: "policy-acknowledgement",
+    deployer_eligible: true, internal: true,
     steps: [
-      { name: "Sinh viên nộp hồ sơ + nộp phí online", actor: "Sinh viên" },
-      { name: "Tiếp nhận & đối chiếu điểm", actor: "Chuyên viên P. Đào tạo", duration: "1 ngày" },
-      { name: "In bảng điểm & trình ký",   actor: "P. Đào tạo",              duration: "1 ngày" },
-      { name: "Trưởng phòng ký + đóng dấu", actor: "Trưởng phòng",           duration: "0,5 ngày" },
-      { name: "Trả kết quả",                actor: "Bộ phận Một cửa",        duration: "0,5 ngày" },
+      { name: "HR deploys", actor: "HR Office" },
+      { name: "Staff acknowledges", actor: "Recipient" },
     ],
     fields: [
-      { key: "hoc_ky",   label: "Học kỳ tính đến", type: "text", required: true, placeholder: "vd: HK1 2025–2026" },
-      { key: "so_ban",   label: "Số bản",          type: "number", required: true, placeholder: "1" },
-      { key: "ngon_ngu", label: "Ngôn ngữ",        type: "select", required: true, options: ["Tiếng Việt", "Tiếng Anh", "Song ngữ"] },
-      { key: "xep_loai", label: "Kèm xếp loại?",   type: "select", required: true, options: ["Có", "Không"] },
+      { key: "policy_version", label: "Policy version", type: "text", required: true, placeholder: "e.g. 2026.01" },
+      { key: "ack", label: "I have read and understood the policy", type: "select", required: true, options: ["Yes"] },
     ],
   },
   {
-    code: "TT-VJU-HV-03",
-    name: "Bảo lưu kết quả học tập",
-    cat: "hoc-vu", audience: "sv",
-    muc: 3, sla_days: 5, fee: 0, agency: "Phòng Đào tạo",
-    rating: 4.5, reviews: 76, used_30d: 18,
-    desc: "Đăng ký tạm dừng học và bảo lưu kết quả đến tối đa 2 học kỳ.",
-    legal: "Quy chế đào tạo đại học VJU 2024, Điều 18",
-    docs: [
-      { name: "Đơn xin bảo lưu (có xác nhận của Khoa)", required: true, has_template: true },
-      { name: "Minh chứng lý do bảo lưu", required: true },
-    ],
+    code: "VJU-IN-02",
+    name: "IT security training acknowledgement",
+    cat: "internal",
+    desc: "Internal workflow: IT deploys security training material for staff to confirm completion.",
+    team: "IT Office", due_hours: 72,
+    deployed: true, bpmn: "security-acknowledgement",
+    deployer_eligible: true, internal: true,
     steps: [
-      { name: "SV nộp hồ sơ", actor: "Sinh viên" },
-      { name: "Cố vấn học tập xác nhận", actor: "Cố vấn HT", duration: "1 ngày" },
-      { name: "Khoa duyệt", actor: "Trưởng/Phó Khoa", duration: "2 ngày" },
-      { name: "P. Đào tạo trình Hiệu trưởng", actor: "P. Đào tạo", duration: "1 ngày" },
-      { name: "Hiệu trưởng ký quyết định", actor: "Hiệu trưởng", duration: "1 ngày" },
+      { name: "IT deploys to recipients", actor: "IT Office" },
+      { name: "Recipient acknowledges", actor: "Recipient" },
     ],
     fields: [
-      { key: "hoc_ky", label: "Học kỳ bắt đầu bảo lưu", type: "text", required: true, placeholder: "Xuân 2026" },
-      { key: "so_ky",  label: "Số học kỳ bảo lưu",      type: "select", required: true, options: ["1 học kỳ", "2 học kỳ"] },
-      { key: "ly_do",  label: "Lý do bảo lưu",          type: "textarea", required: true },
+      { key: "policy_version", label: "Policy version", type: "text", required: true },
+      { key: "ack", label: "I have read and understood the policy", type: "select", required: true, options: ["Yes"] },
     ],
   },
-
-  // ─── Tài chính ───
-  {
-    code: "TT-VJU-TC-01",
-    name: "Miễn, giảm học phí",
-    cat: "tai-chinh", audience: "sv",
-    muc: 4, sla_days: 7, fee: 0, agency: "Phòng Tài chính – Kế toán",
-    rating: 4.6, reviews: 145, used_30d: 89,
-    desc: "Đề nghị xét miễn, giảm học phí theo chính sách của Nhà nước và Nhà trường (diện hộ nghèo, dân tộc thiểu số, con thương binh…).",
-    legal: "Nghị định 81/2021/NĐ-CP, Quy định miễn giảm HP của VJU",
-    docs: [
-      { name: "Đơn đề nghị miễn, giảm học phí", required: true, has_template: true },
-      { name: "Bản sao sổ hộ nghèo/cận nghèo có công chứng", required: true },
-      { name: "Bản sao giấy khai sinh", required: true },
-      { name: "Giấy xác nhận của UBND xã/phường", required: true },
-    ],
-    steps: [
-      { name: "SV nộp hồ sơ",             actor: "Sinh viên" },
-      { name: "Tiếp nhận & đối chiếu",    actor: "P. TC-KT",         duration: "1 ngày" },
-      { name: "Xác minh hoàn cảnh",       actor: "P. CTSV phối hợp", duration: "3 ngày" },
-      { name: "Hội đồng xét duyệt",       actor: "Hội đồng",         duration: "2 ngày" },
-      { name: "Ban hành quyết định",      actor: "Hiệu trưởng",      duration: "1 ngày" },
-    ],
-    fields: [
-      { key: "dien",     label: "Diện xét miễn giảm", type: "select", required: true,
-        options: ["Hộ nghèo có sổ", "Hộ cận nghèo", "Dân tộc thiểu số", "Con thương binh / liệt sĩ", "Mồ côi", "Khác"] },
-      { key: "hoc_ky",   label: "Học kỳ áp dụng", type: "text", required: true, placeholder: "Xuân 2026" },
-      { key: "muc_xin",  label: "Mức xin miễn/giảm", type: "select", required: true, options: ["Miễn 100%", "Giảm 50%", "Giảm 30%"] },
-      { key: "hoan_canh",label: "Mô tả hoàn cảnh",   type: "textarea", required: true },
-    ],
-  },
-  {
-    code: "TT-VJU-TC-02",
-    name: "Hoàn trả lệ phí thi",
-    cat: "tai-chinh", audience: "sv",
-    muc: 4, sla_days: 5, fee: 0, agency: "Phòng Tài chính – Kế toán",
-    rating: 4.4, reviews: 38, used_30d: 12,
-    desc: "Hoàn trả các khoản lệ phí đã đóng dư hoặc đóng nhầm.",
-    legal: "Quy định thu chi tài chính VJU 2025",
-    docs: [
-      { name: "Đơn đề nghị hoàn trả", required: true, has_template: true },
-      { name: "Biên lai gốc", required: true },
-    ],
-    steps: [
-      { name: "SV nộp hồ sơ", actor: "Sinh viên" },
-      { name: "P. TC-KT đối chiếu", actor: "P. TC-KT", duration: "2 ngày" },
-      { name: "Trưởng phòng duyệt", actor: "Trưởng P. TC-KT", duration: "1 ngày" },
-      { name: "Hoàn tiền + thông báo", actor: "P. TC-KT", duration: "2 ngày" },
-    ],
-    fields: [
-      { key: "khoan_phi", label: "Khoản lệ phí",  type: "text",   required: true },
-      { key: "so_tien",   label: "Số tiền (VNĐ)", type: "number", required: true },
-      { key: "stk",       label: "STK nhận tiền", type: "text",   required: true },
-      { key: "ngan_hang", label: "Ngân hàng",     type: "text",   required: true },
-    ],
-  },
-
-  // ─── KTX ───
-  {
-    code: "TT-VJU-KTX-01",
-    name: "Đăng ký ở Ký túc xá",
-    cat: "ktx", audience: "sv",
-    muc: 4, sla_days: 5, fee: 0, agency: "Ban Quản lý KTX",
-    rating: 4.3, reviews: 521, used_30d: 78,
-    desc: "Đăng ký chỗ ở KTX cho học kỳ tiếp theo. Ưu tiên SV năm thứ nhất, SV có hoàn cảnh khó khăn, SV ở xa.",
-    legal: "Quy chế Ký túc xá VJU",
-    docs: [
-      { name: "Đơn đăng ký KTX", required: true, has_template: true },
-      { name: "Giấy khai sinh hoặc CCCD", required: true },
-      { name: "Giấy chứng nhận hoàn cảnh (nếu có)", required: false },
-    ],
-    steps: [
-      { name: "SV đăng ký online", actor: "Sinh viên" },
-      { name: "BQL KTX xét duyệt", actor: "BQL KTX",  duration: "3 ngày" },
-      { name: "Phân phòng",        actor: "BQL KTX",  duration: "1 ngày" },
-      { name: "Thông báo + ký HĐ", actor: "BQL KTX",  duration: "1 ngày" },
-    ],
-    fields: [
-      { key: "hoc_ky",  label: "Học kỳ", type: "text", required: true },
-      { key: "loai",    label: "Loại phòng mong muốn", type: "select", required: true,
-        options: ["4 người", "6 người", "8 người"] },
-      { key: "khu",     label: "Khu vực ưu tiên", type: "select", options: ["A", "B", "C", "Không yêu cầu"] },
-      { key: "uu_tien", label: "Diện ưu tiên", type: "select", options: ["Không có", "Hộ nghèo", "Con thương binh", "Vùng sâu xa"] },
-    ],
-  },
-  {
-    code: "TT-VJU-KTX-02",
-    name: "Chuyển phòng KTX",
-    cat: "ktx", audience: "sv",
-    muc: 3, sla_days: 3, fee: 0, agency: "Ban Quản lý KTX",
-    rating: 4.5, reviews: 89, used_30d: 22,
-    desc: "Đề nghị đổi sang phòng hoặc khu khác trong KTX.",
-    legal: "Quy chế Ký túc xá VJU, Điều 12",
-    docs: [
-      { name: "Đơn xin chuyển phòng (có xác nhận trưởng phòng cũ)", required: true, has_template: true },
-    ],
-    steps: [
-      { name: "SV nộp đơn",  actor: "Sinh viên" },
-      { name: "Kiểm tra phòng trống", actor: "BQL KTX", duration: "1 ngày" },
-      { name: "Trưởng BQL duyệt", actor: "Trưởng BQL", duration: "1 ngày" },
-      { name: "Bàn giao chuyển phòng", actor: "BQL KTX", duration: "1 ngày" },
-    ],
-    fields: [
-      { key: "phong_cu",  label: "Phòng hiện tại",   type: "text", required: true, placeholder: "vd: A-303" },
-      { key: "phong_moi", label: "Phòng mong muốn",  type: "text", required: true, placeholder: "vd: B-205" },
-      { key: "ly_do",     label: "Lý do",            type: "textarea", required: true },
-    ],
-  },
-
-  // ─── Khiếu nại ───
-  {
-    code: "TT-VJU-KN-01",
-    name: "Phản ánh, kiến nghị",
-    cat: "khieu-nai", audience: "sv",
-    muc: 4, sla_days: 10, fee: 0, agency: "Văn phòng Hiệu trưởng",
-    rating: 4.2, reviews: 67, used_30d: 8,
-    desc: "Phản ánh, kiến nghị về dịch vụ giáo dục, cơ sở vật chất, thái độ phục vụ của cán bộ.",
-    legal: "Luật Khiếu nại, Quy chế tiếp công dân VJU",
-    docs: [
-      { name: "Đơn phản ánh kiến nghị", required: true, has_template: true },
-      { name: "Tài liệu, hình ảnh chứng minh (nếu có)", required: false },
-    ],
-    steps: [
-      { name: "Người dân/SV gửi",      actor: "Người gửi" },
-      { name: "VP tiếp nhận, phân loại", actor: "VP Hiệu trưởng",  duration: "2 ngày" },
-      { name: "Đơn vị liên quan xử lý",  actor: "Đơn vị",          duration: "5 ngày" },
-      { name: "Tổng hợp & phản hồi",    actor: "VP Hiệu trưởng",  duration: "3 ngày" },
-    ],
-    fields: [
-      { key: "loai",     label: "Loại phản ánh", type: "select", required: true,
-        options: ["Chất lượng giảng dạy", "Cơ sở vật chất", "Thái độ phục vụ", "Quy trình thủ tục", "Khác"] },
-      { key: "tieu_de",  label: "Tiêu đề",       type: "text", required: true },
-      { key: "noi_dung", label: "Nội dung chi tiết", type: "textarea", required: true },
-      { key: "ky_vong",  label: "Kỳ vọng giải quyết", type: "textarea" },
-    ],
-  },
-
 ];
 
-// ─── Submitted mock requests (chỉ cho 2 workflow đã chạy thật trên VJU Hub) ───
-const SVC_IT = SERVICES[0];  // IT Support
-const SVC_NP = SERVICES[1];  // Xin nghỉ phép
-
-const SUBMITTED = [
-  // IT Support — đang xử lý (Cao priority, SLA 1 ngày)
-  {
-    code: "DVC-2026-001234",
-    service: SVC_IT,
-    requester: { name: "Lưu Thị K", id: "VJU-CB-0123" },
-    submitted_at: "2026-05-12T09:24:00",
-    due_at: "2026-05-13T17:00:00",
-    current_step: 2,
-    status: "processing",
-    submitted_data: {
-      "Tiêu đề":      "Máy in HP P. Đào tạo không kết nối được Wi-Fi",
-      "Lĩnh vực":     "Phần cứng (Laptop, máy in, máy chiếu…)",
-      "Mức ưu tiên":  "Cao (1 ngày làm việc)",
-      "Mô tả":        "Máy in HP LaserJet ở P201 mất kết nối Wi-Fi từ sáng nay. Đã khởi động lại router và máy in nhưng không có hiệu quả.",
-    },
-    timeline: [
-      { t: "2026-05-12T09:24", step: 0, label: "Người yêu cầu gửi",                  actor: "Lưu Thị K",       done: true },
-      { t: "2026-05-12T09:24", step: 1, label: "Tự động phân công qua DMN",           actor: "Hệ thống",        done: true, note: "Phân cho Trần Văn IT (nhóm Hardware)" },
-      { t: "2026-05-12T14:02", step: 2, label: "Trần Văn IT nhận và đang xử lý",      actor: "Trần Văn IT",     done: false, current: true, note: "Đang kiểm tra firmware máy in từ xa" },
-    ],
-    rating: null,
+// ─────────────────────────────────────────────────────────────
+// Mock users (signed-in personas — picked on login.html).
+// `is_deployer` mirrors Workflow.deployers() membership (per-workflow in real VJU Hub;
+// simplified here to one global flag for the demo).
+// ─────────────────────────────────────────────────────────────
+const MOCK_USERS = {
+  staff: {
+    id: "VJU-STF-0001", name: "John Smith", email: "john.smith@vju.ac.vn",
+    role: "staff", role_label: "Staff · Officer",
+    unit: "Office of Academic Affairs", is_deployer: true,
   },
-  // IT Support — đã hoàn tất (5 sao)
+  manager: {
+    id: "VJU-STF-0007", name: "Charles Le", email: "charles.le@vju.ac.vn",
+    role: "manager", role_label: "Staff · Direct Manager",
+    unit: "Office of Academic Affairs", is_deployer: false,
+  },
+  student: {
+    id: "VJU-STU-2026-001", name: "Mary Tran", email: "mary.tran@st.vju.ac.vn",
+    role: "student", role_label: "Student · Class of 2029",
+    unit: "School of Computer Science & Engineering", is_deployer: false,
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// Visibility + deploy gates (mirror Workflow.scopeAccessibleBy + Workflow.deployers)
+// ─────────────────────────────────────────────────────────────
+function canSeeService(service, user) {
+  if (!service) return false;
+  if (!service.internal) return true;                  // public workflow
+  return !!(user && user.is_deployer);                 // internal: deployer-only
+}
+function canDeployService(service, user) {
+  if (!service || !service.deployer_eligible) return false;
+  return !!(user && user.is_deployer);
+}
+function findService(code) { return SERVICES.find(s => s.code === code) || null; }
+
+// ─────────────────────────────────────────────────────────────
+// Recipient pool — used by deploy.html
+// ─────────────────────────────────────────────────────────────
+const RECIPIENT_POOL = [
+  { id: 101, name: "Brandon Tran",  email: "brandon.tran@vju.ac.vn",  department: "IT Office" },
+  { id: 102, name: "Phoebe Pham",   email: "phoebe.pham@vju.ac.vn",   department: "IT Office" },
+  { id: 103, name: "Charles Le",    email: "charles.le@vju.ac.vn",    department: "HR Office" },
+  { id: 104, name: "Emily Do",      email: "emily.do@vju.ac.vn",      department: "Office of Academic Affairs" },
+  { id: 105, name: "Patricia Pham", email: "patricia.pham@vju.ac.vn", department: "Finance Office" },
+  { id: 106, name: "Tom Nguyen",    email: "tom.nguyen@vju.ac.vn",    department: "Finance Office" },
+  { id: 107, name: "David Pham",    email: "david.pham@vju.ac.vn",    department: "School of Mechatronics" },
+  { id: 108, name: "Greg Tran",     email: "greg.tran@vju.ac.vn",     department: "School of Computer Science" },
+  { id: 109, name: "Lisa K. Tran",  email: "lisa.tran@vju.ac.vn",     department: "Phòng Đào tạo" },
+  { id: 110, name: "Fiona Le",      email: "fiona.le@vju.ac.vn",      department: "School of Mechatronics" },
+];
+
+// ─────────────────────────────────────────────────────────────
+// Public stats strip (for the home page)
+// ─────────────────────────────────────────────────────────────
+const PUBLIC_STATS = {
+  total_30d: 1247,
+  on_time_pct: 96,
+  total_services: SERVICES.filter(s => s.deployed).length,
+  roadmap_services: SERVICES.filter(s => !s.deployed).length,
+};
+
+// ─────────────────────────────────────────────────────────────
+// SUBMITTED — workflow_requests created by me (current user, demo as John Smith).
+// `timeline` mirrors what request-timeline.tsx renders: each entry has `t` (ISO),
+// `label`, `actor`, and may have `done + decision + submission` for task-completed entries.
+// ─────────────────────────────────────────────────────────────
+const SUBMITTED = [
   {
-    code: "DVC-2026-001198",
-    service: SVC_IT,
-    requester: { name: "Nguyễn Văn A", id: "VJU-CB-0001" },
+    code: "VJU-IT-2026-001198",
+    service: SERVICES[0], // IT Support
+    requester: { name: "John Smith", id: "VJU-STF-0001", unit: "Office of Academic Affairs" },
     submitted_at: "2026-05-08T10:00:00",
-    due_at: "2026-05-15T17:00:00",
+    due_at: "2026-05-11T17:00:00",
     current_step: 4,
     status: "done",
-    submitted_data: {
-      "Tiêu đề":      "Wi-Fi tầng 3 toà A yếu vào buổi chiều",
-      "Lĩnh vực":     "Mạng / Internet",
-      "Mức ưu tiên":  "Trung bình (3 ngày làm việc)",
-      "Mô tả":        "Wi-Fi VJU-Staff ở khu giảng đường tầng 3 toà A tín hiệu yếu, hay rớt từ ~14h trở đi. Một số máy không kết nối được.",
-    },
+    summary: "Weak afternoon Wi-Fi on Building A 3rd floor",
+    submitted_data: { Title: "Weak afternoon Wi-Fi on Building A 3rd floor", Priority: "Medium" },
     timeline: [
-      { t: "2026-05-08T10:00", step: 0, label: "Người yêu cầu gửi",                  actor: "Nguyễn Văn A",    done: true },
-      { t: "2026-05-08T10:00", step: 1, label: "Tự động phân công",                  actor: "Hệ thống",        done: true, note: "Phân cho Phạm Thị Net (nhóm Network)" },
-      { t: "2026-05-09T08:30", step: 2, label: "Khảo sát hiện trường, thêm 1 AP mới", actor: "Phạm Thị Net",    done: true },
-      { t: "2026-05-10T15:00", step: 3, label: "Người yêu cầu xác nhận đã ổn",       actor: "Nguyễn Văn A",    done: true, note: "Tín hiệu mạnh đều cả khu vực." },
-      { t: "2026-05-10T15:00", step: 4, label: "Hoàn tất",                            actor: "Hệ thống",        done: true },
+      { t: "2026-05-08T10:00:00", label: "Request submitted", actor: "John Smith" },
+      { t: "2026-05-08T10:00:00", label: "Auto-assigned",      actor: "—", note: "Routed to Phoebe Pham (Network group)" },
+      { t: "2026-05-08T11:05:00", type: "comment", actor: "Phoebe Pham", note: "Hi John, taking a look now. Can you tell me which side of the 3rd floor — east wing or west?" },
+      { t: "2026-05-08T11:18:00", type: "comment", actor: "John Smith",  note: "East wing, near rooms 305–312. Worst around 14:00–16:00 every day." },
+      { t: "2026-05-08T14:02:00", type: "comment", actor: "Phoebe Pham", note: "Confirmed — signal drops to -78 dBm under load. Will request a new AP install. ETA tomorrow morning." },
+      { t: "2026-05-09T16:32:00", label: "Issue handled",      actor: "Phoebe Pham", done: true,
+        decision: "Fixed — added a new access point",
+        startedAt: "2026-05-08T11:00:00",
+        submission: { "Resolution summary": "Added AP on east corridor; signal now ≥-65 dBm" } },
+      { t: "2026-05-09T17:10:00", type: "comment", actor: "Phoebe Pham", note: "New AP is live. Could you confirm the signal is OK now when you get a chance?" },
+      { t: "2026-05-10T08:50:00", type: "comment", actor: "John Smith",  note: "Tested this morning — strong signal across the whole corridor. Thanks Phoebe!" },
+      { t: "2026-05-10T09:15:00", label: "Requester confirmation", actor: "John Smith", done: true,
+        decision: "Confirmed — issue resolved",
+        startedAt: "2026-05-09T16:32:00",
+        submission: { "Was the issue resolved?": "Yes" } },
+      { t: "2026-05-10T15:00:00", label: "Closed", actor: "—" },
     ],
-    rating: 5,
   },
-  // Nghỉ phép — đang chờ quản lý duyệt
   {
-    code: "DVC-2026-001150",
-    service: SVC_NP,
-    requester: { name: "Nguyễn Văn A", id: "VJU-CB-0001" },
-    submitted_at: "2026-05-11T16:30:00",
-    due_at: "2026-05-13T17:00:00",
-    current_step: 1,
-    status: "processing",
-    submitted_data: {
-      "Tiêu đề":  "Nghỉ phép năm tuần 19/05–21/05",
-      "Hình thức":"Nghỉ phép năm",
-      "Từ":       "19/05/2026 08:00",
-      "Đến":      "21/05/2026 17:00",
-      "Ghi chú":  "Bàn giao công việc cho Trần Thị B. Vẫn online check email các buổi sáng nếu cần.",
-    },
-    timeline: [
-      { t: "2026-05-11T16:30", step: 0, label: "Cán bộ gửi đơn",                     actor: "Nguyễn Văn A", done: true },
-      { t: "2026-05-12T09:00", step: 1, label: "Đang chờ Quản lý trực tiếp duyệt",   actor: "Lê Văn C",     done: false, current: true },
-    ],
-    rating: null,
-  },
-  // Nghỉ phép — đã duyệt + đồng bộ về VJU Attendance
-  {
-    code: "DVC-2026-001102",
-    service: SVC_NP,
-    requester: { name: "Nguyễn Văn A", id: "VJU-CB-0001" },
+    code: "VJU-LV-2026-001102",
+    service: SERVICES[1], // Leave
+    requester: { name: "John Smith", id: "VJU-STF-0001", unit: "Office of Academic Affairs" },
     submitted_at: "2026-05-04T10:00:00",
     due_at: "2026-05-06T17:00:00",
     current_step: 3,
     status: "done",
-    submitted_data: {
-      "Tiêu đề":  "Đi công tác Đà Nẵng 13-14/05",
-      "Hình thức":"Đi công tác",
-      "Từ":       "13/05/2026 06:00",
-      "Đến":      "14/05/2026 20:00",
-      "Ghi chú":  "Tham dự hội thảo Open Education Asia. Đăng ký + vé máy bay đính kèm.",
-    },
+    summary: "Business trip · Hanoi → HCMC, May 12-14",
+    submitted_data: { "Request type": "Business trip", From: "2026-05-12", To: "2026-05-14" },
     timeline: [
-      { t: "2026-05-04T10:00", step: 0, label: "Cán bộ gửi đơn",                       actor: "Nguyễn Văn A", done: true },
-      { t: "2026-05-04T15:00", step: 1, label: "Quản lý đã duyệt",                     actor: "Lê Văn C",     done: true, note: "Đồng ý, lưu ý gửi báo cáo sau công tác." },
-      { t: "2026-05-04T15:00", step: 2, label: "(Bỏ qua chỉnh sửa)",                   actor: "—",            done: true },
-      { t: "2026-05-04T15:01", step: 3, label: "Đồng bộ về VJU Attendance thành công", actor: "Vệ tinh",      done: true, note: "Đã ghi nhận lịch công tác trong hệ thống chấm công." },
+      { t: "2026-05-04T10:00:00", label: "Request submitted", actor: "John Smith" },
+      { t: "2026-05-04T12:14:00", type: "comment", actor: "Charles Le", note: "Looks good. Have you already booked the HCMC return ticket, or should HR do it?" },
+      { t: "2026-05-04T13:02:00", type: "comment", actor: "John Smith",  note: "Booked both legs already — Vietnam Airlines, May 12 morning out, May 14 evening back." },
+      { t: "2026-05-04T14:30:00", label: "Manager review", actor: "Charles Le", done: true,
+        decision: "Approve",
+        startedAt: "2026-05-04T11:00:00",
+        submission: { "Decision": "Approve", "Notes": "Approved for both legs" } },
+      { t: "2026-05-04T15:00:00", label: "(No revision needed)", actor: "—" },
+      { t: "2026-05-04T15:01:00", label: "Synced to VJU Attendance successfully", actor: "Satellite", note: "Trip recorded in the attendance system." },
     ],
-    rating: 5,
+  },
+  {
+    code: "VJU-IT-2026-001244",
+    service: SERVICES[0],
+    requester: { name: "John Smith", id: "VJU-STF-0001", unit: "Office of Academic Affairs" },
+    submitted_at: "2026-05-13T08:30:00",
+    due_at: "2026-05-14T17:00:00",
+    current_step: 2,
+    status: "processing",
+    summary: "Projector in Room B-201 won't power on",
+    submitted_data: { Title: "Projector in Room B-201 won't power on", Priority: "High" },
+    timeline: [
+      { t: "2026-05-13T08:30:00", label: "Request submitted", actor: "John Smith" },
+      { t: "2026-05-13T08:30:00", label: "Auto-assigned", actor: "—", note: "Routed to Brandon Tran (A/V group)" },
+      { t: "2026-05-13T09:10:00", type: "comment", actor: "Brandon Tran", note: "Got it — heading to B-201 now. Will check the projector and the HDMI source." },
+      { t: "2026-05-13T09:45:00", type: "comment", actor: "Brandon Tran", note: "Projector power supply seems faulty. Ordering a replacement, ETA Friday. Will keep you posted." },
+      { t: "2026-05-13T10:02:00", type: "comment", actor: "John Smith",  note: "Thanks Brandon. I have a lecture in B-201 on Friday afternoon — please prioritise if you can." },
+    ],
   },
 ];
 
-// ── Helpers ──
-function findService(code) { return SERVICES.find(s => s.code === code); }
-function findSubmitted(code) { return SUBMITTED.find(s => s.code === code); }
-function findCategory(id)  { return CATEGORIES.find(c => c.id === id); }
-function servicesIn(catId) { return SERVICES.filter(s => s.cat === catId); }
-function audienceLabel(a)  { return a === "sv" ? "Sinh viên" : "Cán bộ"; }
-function feeText(f)        { return f === 0 ? "Miễn phí" : f.toLocaleString("vi-VN") + " đ"; }
-function mucBadge(m) {
-  const labels = { 1: "Mức 1", 2: "Mức 2", 3: "Mức 3", 4: "Mức 4 (Toàn trình)" };
-  return `<span class="svc-muc muc-${m}">${labels[m] || m}</span>`;
-}
-function statusBadge(s) {
-  const map = {
-    pending:    { cls: "pending",    label: "Chờ tiếp nhận" },
-    processing: { cls: "processing", label: "Đang xử lý" },
-    done:       { cls: "done",       label: "Đã trả KQ" },
-    rejected:   { cls: "late",       label: "Trả lại" },
-    late:       { cls: "late",       label: "Trễ hạn" },
-    draft:      { cls: "draft",      label: "Bản nháp" },
-  };
-  const v = map[s] || { cls: "draft", label: s };
-  return `<span class="badge ${v.cls}"><span class="dot"></span>${v.label}</span>`;
-}
-function fmtDate(iso)   { return new Date(iso).toLocaleDateString("vi-VN"); }
-function fmtDateTime(iso) { return new Date(iso).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }); }
+// ─────────────────────────────────────────────────────────────
+// INBOX — workflow_tasks assigned to me. `task_name` is the BPMN task name.
+// ─────────────────────────────────────────────────────────────
+const INBOX = [
+  {
+    code: "VJU-IT-2026-001220",
+    service: SERVICES[0],
+    requester: { name: "David Pham", id: "VJU-STF-0042", unit: "School of Mechatronics" },
+    submitted_at: "2026-05-13T14:12:00",
+    due_at: "2026-05-14T17:00:00",
+    current_step: 2,
+    status: "processing",
+    task_name: "Handle issue",
+    summary: "Office laptop won't boot after Windows update",
+    submitted_data: { Title: "Office laptop won't boot after Windows update", Priority: "High" },
+    timeline: [
+      { t: "2026-05-13T14:12:00", label: "Request submitted", actor: "David Pham" },
+      { t: "2026-05-13T14:12:00", label: "Auto-assigned", actor: "—", note: "Routed to current user (John Smith)" },
+      { t: "2026-05-13T14:18:00", type: "comment", actor: "David Pham", note: "Hi — laptop won't get past the Lenovo splash since the latest Windows update last night. Already tried hard-reboot a few times." },
+      { t: "2026-05-13T15:40:00", type: "comment", actor: "David Pham", note: "Tried safe mode boot, no luck. Sending the laptop to your office now." },
+    ],
+  },
+  {
+    code: "VJU-LV-2026-001231",
+    service: SERVICES[1],
+    requester: { name: "Emily Do", id: "VJU-STF-0019", unit: "Office of Academic Affairs" },
+    submitted_at: "2026-05-13T09:45:00",
+    due_at: "2026-05-14T17:00:00",
+    current_step: 1,
+    status: "processing",
+    task_name: "Manager review",
+    summary: "Sick leave · May 15-16",
+    submitted_data: { "Request type": "Sick leave", From: "2026-05-15", To: "2026-05-16" },
+    timeline: [
+      { t: "2026-05-13T09:45:00", label: "Request submitted", actor: "Emily Do" },
+      { t: "2026-05-13T10:30:00", type: "comment", actor: "Emily Do", note: "Hi, I came down with the flu yesterday. Doctor's note attached in case you need it." },
+      { t: "2026-05-13T11:15:00", type: "comment", actor: "Emily Do", note: "Already handed over my Friday office hours to Tom. Let me know if anything else is needed." },
+    ],
+  },
+];
 
-// ── Public stats — chỉ tính cho dịch vụ đã triển khai thực tế ──
-const DEPLOYED_SERVICES = SERVICES.filter(s => s.deployed);
-const PUBLIC_STATS = {
-  total_30d: DEPLOYED_SERVICES.reduce((a, s) => a + s.used_30d, 0),  // 340
-  on_time_pct: 95.8,
-  late_pct: 4.2,
-  avg_rating: 4.75,
-  total_services: DEPLOYED_SERVICES.length,    // 2
-  roadmap_services: SERVICES.length - DEPLOYED_SERVICES.length,  // 6
-  total_users: 287,
+// ─────────────────────────────────────────────────────────────
+// Work Schedule — mirrors VJU Hub WorkSchedule/index.tsx
+// Each event maps to `work_schedules` row: schedule_type, tieu_de, start/end
+// date+time, chu_tri (chairperson), dia_diem, attendees, ghi_chu, meeting_notes.
+// ─────────────────────────────────────────────────────────────
+const WORK_SCHEDULE_TYPES = [
+  { type: "meeting",       label: "Meeting",        color: "#1f558f", bg: "#e9f0f8" },
+  { type: "teaching",      label: "Teaching",       color: "#176c3e", bg: "#e6f4ec" },
+  { type: "business_trip", label: "Business trip",  color: "#b5613d", bg: "#fbf1ec" },
+  { type: "on_site",       label: "On-site event",  color: "#6d28d9", bg: "#f5f3ff" },
+  { type: "personal",      label: "Personal",       color: "#b59023", bg: "#fbf4d9" },
+];
+
+const WORK_SCHEDULES = [
+  {
+    id: 1, schedule_type: "meeting",
+    tieu_de: "Weekly IT Office stand-up",
+    start_date: "2026-05-11", end_date: "2026-05-11", start_time: "09:00", end_time: "09:30",
+    chu_tri: "Brandon Tran", dia_diem: "Room C-331 · IT Office",
+    attendees: ["Phoebe Pham", "John Smith"],
+    ghi_chu: "Review last week's tickets and assign owners for new incidents.",
+  },
+  {
+    id: 2, schedule_type: "teaching",
+    tieu_de: "CSE-201 · Operating Systems lecture",
+    start_date: "2026-05-12", end_date: "2026-05-12", start_time: "08:00", end_time: "10:00",
+    chu_tri: "Dr. Greg Tran", dia_diem: "Room B-201",
+    attendees: ["Mary Tran"],
+    ghi_chu: "Chapter 4 — Process scheduling.",
+  },
+  {
+    id: 3, schedule_type: "business_trip",
+    tieu_de: "Business trip · Hanoi → HCMC",
+    start_date: "2026-05-12", end_date: "2026-05-14", start_time: null, end_time: null,
+    chu_tri: "John Smith", dia_diem: "VJU HCMC liaison office",
+    attendees: ["Charles Le"],
+    ghi_chu: "Coordinating with the HCMC partner office. Synced from leave workflow VJU-LV-2026-001102.",
+  },
+  {
+    id: 4, schedule_type: "meeting",
+    tieu_de: "All-staff townhall · Q2 update",
+    start_date: "2026-05-14", end_date: "2026-05-14", start_time: "14:00", end_time: "16:00",
+    chu_tri: "Prof. Furuta Motoo", dia_diem: "Hall C-101",
+    attendees: ["John Smith", "Charles Le", "Emily Do", "Brandon Tran", "Phoebe Pham", "Patricia Pham"],
+    ghi_chu: "Quarterly progress, budget update, Q3 plans. Live-streamed for HCMC campus.",
+    meeting_notes: "President's keynote + 30min Q&A.",
+  },
+  {
+    id: 5, schedule_type: "on_site",
+    tieu_de: "New AP rollout · Building A 3rd floor",
+    start_date: "2026-05-14", end_date: "2026-05-14", start_time: "10:00", end_time: "12:00",
+    chu_tri: "Phoebe Pham", dia_diem: "Building A · 3F east corridor",
+    attendees: ["Brandon Tran"],
+    ghi_chu: "Field install for IT case VJU-IT-2026-001198 follow-up.",
+  },
+  {
+    id: 6, schedule_type: "teaching",
+    tieu_de: "MEC-310 · Robotics lab",
+    start_date: "2026-05-15", end_date: "2026-05-15", start_time: "13:30", end_time: "16:30",
+    chu_tri: "Prof. David Pham", dia_diem: "Lab D-205",
+    attendees: ["Fiona Le"],
+  },
+  {
+    id: 7, schedule_type: "personal",
+    tieu_de: "Doctor's appointment",
+    start_date: "2026-05-15", end_date: "2026-05-15", start_time: "17:30", end_time: "18:30",
+    chu_tri: "John Smith", dia_diem: "Bach Mai Hospital",
+    attendees: [],
+    visibility: "private",
+  },
+  {
+    id: 8, schedule_type: "meeting",
+    tieu_de: "HR · Onboarding orientation for new hires",
+    start_date: "2026-05-18", end_date: "2026-05-18", start_time: "09:30", end_time: "11:30",
+    chu_tri: "Charles Le", dia_diem: "Room C-311",
+    attendees: ["Emily Do", "Brandon Tran"],
+    ghi_chu: "3 new staff joining the HR Office and IT Office on May 18.",
+  },
+];
+
+function findSchedule(id) { return WORK_SCHEDULES.find(e => e.id === Number(id)) || null; }
+function getScheduleType(t)  { return WORK_SCHEDULE_TYPES.find(x => x.type === t) || WORK_SCHEDULE_TYPES[0]; }
+
+// ─────────────────────────────────────────────────────────────
+// Contact Directory — mirrors VJU Hub ContactDirectory/Index.tsx
+// shape: sections (Roman-numeral grouped) → departments → employees.
+// ─────────────────────────────────────────────────────────────
+const DIRECTORY = {
+  title: "VJU CONTACT DIRECTORY",
+  sections: [
+    {
+      code: "L", roman: "I", label_en: "Leadership", label_vi: "Ban Giám hiệu",
+      departments: [
+        {
+          id: 1, name_en: "President's Office", name_vi: "Văn phòng Hiệu trưởng",
+          employees: [
+            { no: 1, display_name: "Prof. Furuta Motoo",    position: "President",          emails: ["president@vju.ac.vn"],     mobile: "+84 24 7300 1001", room: "C-501", dob: "1957-04-02" },
+            { no: 2, display_name: "Assoc. Prof. Nguyen Hoang Oanh", position: "Vice President", emails: ["vp.oanh@vju.ac.vn"], mobile: "+84 24 7300 1002", room: "C-502", dob: "1971-11-15" },
+          ],
+        },
+      ],
+    },
+    {
+      code: "F", roman: "II", label_en: "Faculty Schools", label_vi: "Các Khoa",
+      departments: [
+        {
+          id: 11, name_en: "School of Mechatronics", name_vi: "Khoa Cơ điện tử",
+          employees: [
+            { no: 1, display_name: "Prof. David Pham", position: "Dean",      emails: ["d.pham@vju.ac.vn"],    mobile: "+84 24 7300 2001", room: "C-401", dob: "1972-05-25" },
+            { no: 2, display_name: "Dr. Fiona Le",     position: "Lecturer",  emails: ["fiona.le@vju.ac.vn"],  mobile: "+84 24 7300 2002", room: "C-402", dob: "1985-08-12" },
+          ],
+        },
+        {
+          id: 12, name_en: "School of Computer Science & Engineering", name_vi: "Khoa Khoa học máy tính",
+          employees: [
+            { no: 1, display_name: "Dr. Greg Tran",  position: "Acting Dean", emails: ["greg.tran@vju.ac.vn"], mobile: "+84 24 7300 2101", room: "C-411", dob: "1980-02-09" },
+            { no: 2, display_name: "Ms. Mary Tran",  position: "Researcher",  emails: ["mary.tran@st.vju.ac.vn"], mobile: "+84 24 7300 2102", room: "C-412", dob: "2007-06-15" },
+          ],
+        },
+      ],
+    },
+    {
+      code: "A", roman: "III", label_en: "Administrative Offices", label_vi: "Các Phòng / Tổ",
+      departments: [
+        {
+          id: 21, name_en: "Office of Academic Affairs", name_vi: "Phòng Đào tạo",
+          employees: [
+            { no: 1, display_name: "Ms. Emily Do",    position: "Head of Office", emails: ["emily.do@vju.ac.vn"],   mobile: "+84 24 7300 3001", room: "C-301", dob: "1979-03-21" },
+            { no: 2, display_name: "Ms. Lisa K. Tran",position: "Officer",        emails: ["lisa.tran@vju.ac.vn"],  mobile: "+84 24 7300 3002", room: "C-302", dob: "1986-09-08" },
+            { no: 3, display_name: "Mr. John Smith",  position: "Officer",        emails: ["john.smith@vju.ac.vn"], mobile: "+84 24 7300 3003", room: "C-303", dob: "1988-12-19" },
+          ],
+        },
+        {
+          id: 22, name_en: "HR Office", name_vi: "Phòng Tổ chức Cán bộ",
+          employees: [
+            { no: 1, display_name: "Mr. Charles Le",  position: "Head of HR",     emails: ["charles.le@vju.ac.vn"], mobile: "+84 24 7300 3101", room: "C-311", dob: "1975-07-04" },
+          ],
+        },
+        {
+          id: 23, name_en: "Finance Office", name_vi: "Phòng Kế hoạch Tài chính",
+          employees: [
+            { no: 1, display_name: "Ms. Patricia Pham", position: "Head of Finance", emails: ["patricia.pham@vju.ac.vn"], mobile: "+84 24 7300 3201", room: "C-321", dob: "1978-01-30" },
+            { no: 2, display_name: "Mr. Tom Nguyen",    position: "Accountant",      emails: ["tom.nguyen@vju.ac.vn"],    mobile: "+84 24 7300 3202", room: "C-322", dob: "1982-10-11" },
+          ],
+        },
+        {
+          id: 24, name_en: "IT Office", name_vi: "Tổ Công nghệ Thông tin",
+          employees: [
+            { no: 1, display_name: "Mr. Brandon Tran", position: "Head of IT",  emails: ["brandon.tran@vju.ac.vn"], mobile: "+84 24 7300 3301", room: "C-331", dob: "1984-04-22" },
+            { no: 2, display_name: "Ms. Phoebe Pham",  position: "Engineer",    emails: ["phoebe.pham@vju.ac.vn"],  mobile: "+84 24 7300 3302", room: "C-332", dob: "1990-09-03" },
+          ],
+        },
+      ],
+    },
+  ],
 };
+
+function findSubmitted(code) { return SUBMITTED.find(r => r.code === code) || null; }
+function findInbox(code)     { return INBOX.find(r => r.code === code) || null; }
+function findCase(code)      { return findSubmitted(code) || findInbox(code); }
+
+// ─────────────────────────────────────────────────────────────
+// Checklist (workflow_task_checklist_items) — per-case mock, persisted in localStorage.
+// ─────────────────────────────────────────────────────────────
+function getChecklist(caseCode) {
+  const key = "dvc-demo:checklist:" + caseCode;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    try { return JSON.parse(saved); } catch {}
+  }
+  const seed = [
+    { id: 1, label: "Verify reporter contact details",   done: false },
+    { id: 2, label: "Check service history for this user", done: false },
+    { id: 3, label: "Confirm resolution with reporter",   done: false },
+  ];
+  localStorage.setItem(key, JSON.stringify(seed));
+  return seed;
+}
+function setChecklist(caseCode, items) {
+  localStorage.setItem("dvc-demo:checklist:" + caseCode, JSON.stringify(items));
+}

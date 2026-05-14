@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Help · VJU Public Service Portal</title>
+ <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
+ <style>.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:flex-start; } @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }</style>
+</head>
+<body>
+<div id="site-shell"></div>
+<main class="page">
+ <div class="crumb"><a href="index.html">Home</a><span class="sep">›</span><span>Help</span></div>
+ <h1 style="margin: 0 0 14px; font-size: 22px;">User guide</h1>
+ <div class="grid-2">
+  <div class="card"><div class="card-body">
+   <h3 style="margin: 0 0 10px;">Submit a case online</h3>
+   <ol style="margin: 0; padding-left: 18px; line-height: 1.8;">
+    <li>Open the service catalogue on the home page.</li>
+    <li>Pick the service that fits your need.</li>
+    <li>Click <strong>Apply</strong>, fill in the form, attach any documents, then submit.</li>
+    <li>Track progress under <strong>My Requests</strong>.</li>
+   </ol>
+  </div></div>
+  <div class="card"><div class="card-body">
+   <h3 style="margin: 0 0 10px;">Follow up on a case</h3>
+   <ol style="margin: 0; padding-left: 18px; line-height: 1.8;">
+    <li>Sign in to access <strong>My Requests</strong>.</li>
+    <li>Switch between <em>Submitted by me</em> and <em>Assigned to me</em>.</li>
+    <li>Open a case to see the chat-style timeline and respond.</li>
+   </ol>
+  </div></div>
+ </div>
+ <section class="section" id="faq" style="margin-top: 28px;">
+  <div class="section-head"><h2>Frequently asked questions</h2></div>
+  <div class="card"><div class="card-body">
+   <details style="padding: 8px 0; border-bottom: 1px solid var(--slate-100);"><summary style="cursor: pointer; font-weight: 600;">How do I sign in?</summary><p style="margin: 8px 0 0; color: var(--slate-600);">Click <em>Sign in</em> at the top right and use your VJU institutional Google account.</p></details>
+   <details style="padding: 8px 0; border-bottom: 1px solid var(--slate-100);"><summary style="cursor: pointer; font-weight: 600;">Can I cancel a submitted case?</summary><p style="margin: 8px 0 0; color: var(--slate-600);">Open the case from My Requests and use the "Dismiss request…" option from the more-actions menu.</p></details>
+   <details style="padding: 8px 0;"><summary style="cursor: pointer; font-weight: 600;">Why don't I see some internal workflows?</summary><p style="margin: 8px 0 0; color: var(--slate-600);">Internal workflows are visible only to staff with deploy permissions for that workflow.</p></details>
+  </div></div>
+ </section>
+</main>
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>mountLayout("guide");</script>
+</body>
+</html>

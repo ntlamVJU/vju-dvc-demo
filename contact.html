@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Contact · VJU Public Service Portal</title>
+ <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
+ <style>.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:flex-start; } @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }</style>
+</head>
+<body>
+<div id="site-shell"></div>
+<main class="page">
+ <div class="crumb"><a href="index.html">Home</a><span class="sep">›</span><span>Contact</span></div>
+ <h1 style="margin: 0 0 14px; font-size: 22px;">Contact us</h1>
+ <div class="grid-2">
+  <div class="card"><div class="card-body">
+   <h3 style="margin: 0 0 10px;">One-stop Desk</h3>
+   <p style="margin: 0 0 6px;"><strong>Phone:</strong> 024.7300.0000</p>
+   <p style="margin: 0 0 6px;"><strong>Email:</strong> dichvucong@vju.ac.vn</p>
+   <p style="margin: 0 0 6px;"><strong>Office hours:</strong> Mon-Fri, 08:00-17:00</p>
+   <p style="margin: 8px 0 0; color: var(--slate-600); font-size: 13px;">Address: Vietnam Japan University, My Dinh Campus, Nam Tu Liem, Ha Noi.</p>
+  </div></div>
+  <div class="card"><div class="card-body">
+   <h3 style="margin: 0 0 10px;">Send a message</h3>
+   <form onsubmit="event.preventDefault(); document.querySelector('button[type=submit]').dispatchEvent(new Event('submit-toast', {bubbles:true})); this.reset();">
+    <div class="form-row"><label>Your name <span class="req">*</span></label><input class="input" type="text" required /></div>
+    <div class="form-row"><label>Your email <span class="req">*</span></label><input class="input" type="email" required /></div>
+    <div class="form-row"><label>Message <span class="req">*</span></label><textarea class="textarea" required></textarea></div>
+    <button class="btn btn-primary" type="submit" onclick="toast('Message sent — demo only', 'success')">Send</button>
+   </form>
+  </div></div>
+ </div>
+</main>
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>mountLayout("contact");</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+/* Tailwind v3 entry — utilities only.
+ * Preflight is disabled in tailwind.config.js because styles.css already provides reset + base.
+ * Components are kept in styles.css (cards, buttons, layout shell) — Tailwind is layered on top
+ * to fix responsive gaps, not to replace the existing design tokens.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

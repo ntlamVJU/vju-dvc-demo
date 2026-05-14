@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Case detail · VJU Public Service Portal</title>
+ <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
+</head>
+<body>
+<div id="site-shell"></div>
+
+<main class="page">
+ <div class="crumb"><a href="index.html">Home</a><span class="sep">›</span><a href="my-requests.html">My Requests</a><span class="sep">›</span><span>Case details</span></div>
+ <div id="root"></div>
+</main>
+
+<!-- Slide-over Sheets (Mute / Checklist / Details) -->
+<div class="sheet-backdrop" id="sheet-backdrop" onclick="closeAllSheets()"></div>
+<div class="sheet" id="sheet-checklist">
+ <div class="sheet-head">
+  <h3>Checklist</h3>
+  <button class="sheet-close" onclick="closeAllSheets()">
+   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+ </div>
+ <div class="sheet-body" id="checklist-body"></div>
+</div>
+<div class="sheet" id="sheet-details">
+ <div class="sheet-head">
+  <h3>Details</h3>
+  <button class="sheet-close" onclick="closeAllSheets()">
+   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+ </div>
+ <div class="sheet-body" id="details-body"></div>
+</div>
+
+<!-- Complete-task modal -->
+<div class="modal-backdrop" id="complete-modal" onclick="if(event.target===this) closeCompleteTask()">
+ <div class="modal">
+  <div class="modal-head"><h3>Complete task</h3>
+   <button class="sheet-close" onclick="closeCompleteTask()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+   </button>
+  </div>
+  <div class="modal-body" id="complete-body"></div>
+  <div class="modal-foot">
+   <button class="btn btn-secondary" onclick="closeCompleteTask()">Cancel</button>
+   <button class="btn btn-primary" onclick="submitCompleteTask()">Submit decision</button>
+  </div>
+ </div>
+</div>
+
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>
+mountAuthLayout("my-requests");
+
+const code = new URLSearchParams(location.search).get("code");
+const root = document.getElementById("root");
+const r = code ? findCase(code) : null;
+
+if (!r) {
+ root.innerHTML = `<div class="card"><div class="card-body" style="text-align:center; padding:40px;"><p class="muted">Case not found. <a href="my-requests.html" style="color: var(--red-700);">Back to My Requests</a></p></div></div>`;
+} else {
+ document.title = r.code + " · VJU Public Service Portal";
+ renderCase(r);
+}
+
+function renderCase(r) {
+ const s = r.service;
+ const currentBuoc = (s.steps || [])[r.current_step] || {};
+ const currentAssignee = currentBuoc.actor || "—";
+ const isLate = r.status === "late";
+ const isDone = r.status === "done";
+ const shortNum = parseInt((r.code.match(/(\d+)$/) || [0, "0"])[1], 10) % 1000;
+
+ const me = getCurrentUser();
+ const myName = me ? me.name : "John Smith";
+
+ const due = new Date(r.due_at);
+ const daysLeft = Math.ceil((due - new Date()) / 86400000);
+ const dueText = daysLeft < 0 ? `Overdue by ${-daysLeft} day${-daysLeft===1?"":"s"}`
+                : daysLeft === 0 ? "Due today" : `Due in ${daysLeft} day${daysLeft===1?"":"s"}`;
+ const dueDateStr = due.toLocaleString("en-US", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
+
+ const feedHtml = buildFeed(r, myName).map(renderEvent).join("");
+
+ const isAssignedToMe = INBOX.some(x => x.code === r.code);
+
+ const muteKey = "dvc-demo:mute:" + r.code;
+ const isMuted = localStorage.getItem(muteKey) === "1";
+
+ const checklist = getChecklist(r.code);
+ const checklistDone = checklist.filter(c => c.done).length;
+ const checklistTotal = checklist.length;
+
+ let waitingHtml = "";
+ if (!isDone && isAssignedToMe) {
+  waitingHtml = `<div class="waiting-box your-turn">
+   <div class="ico is-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+   <div>
+    <h4>It's your turn — please complete this task</h4>
+    <p><strong>${esc(currentBuoc.name || r.task_name || "Current task")}</strong> is assigned to you.</p>
+    <div class="due"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${esc(dueText)} · ${esc(dueDateStr)}</div>
+    <div class="hstack" style="margin-top:10px; gap:8px;">
+     <button class="btn btn-primary btn-sm" onclick="openCompleteTask()">Complete task</button>
+     <button class="btn btn-secondary btn-sm" onclick="toast('Save draft — demo only')">Save draft</button>
+    </div>
+   </div>
+  </div>`;
+ } else if (!isDone) {
+  waitingHtml = `<div class="waiting-box">
+   <div class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg></div>
+   <div><h4>Waiting on ${esc(currentAssignee)}</h4><p>${esc(currentBuoc.name || "Current step")} is in progress.</p>
+    <div class="due"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>${esc(dueText)} · ${esc(dueDateStr)}</div>
+   </div>
+  </div>`;
+ }
+
+ root.innerHTML = `<div class="case-shell">
+  <div class="case-head">
+   <div>
+    <div class="case-id"><span class="num">${shortNum}</span>
+     <span class="case-id-badge ${isDone ? 'is-done' : isLate ? 'is-late' : ''}">${esc(statusLabel(r.status))}</span>
+    </div>
+    <div class="case-title">${esc(r.requester.name)} — ${esc(s.name)}</div>
+    ${isDone
+      ? `<div class="case-step">Completed · final step <strong style="color: var(--green-700);">${esc((s.steps || []).slice(-1)[0]?.name || "—")}</strong></div>`
+      : `<div class="case-step">Current step: <strong>${esc(currentBuoc.name || "—")}</strong> · ${esc(currentAssignee)}</div>`}
+    <div class="case-code">${esc(r.code)}</div>
+    ${isMuted ? `<div class="mute-banner">Notifications muted for this case.</div>` : ""}
+   </div>
+   <div class="case-head-actions">
+    <button class="btn" onclick="toggleMute('${esc(r.code)}')">${isMuted ? 'Muted' : 'Mute'}</button>
+    <button class="btn" onclick="openChecklist()">Checklist ${checklistTotal>0?`(${checklistDone}/${checklistTotal})`:''}</button>
+    <button class="btn" onclick="openDetails()">Details</button>
+   </div>
+  </div>
+  <div class="feed-host">${feedHtml}</div>
+  ${waitingHtml}
+  <form class="compose" onsubmit="event.preventDefault(); sendMessage(this)">
+   <button type="button" class="attach" title="Attach"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+   <textarea placeholder="Type a message… Use @ to mention" rows="1"></textarea>
+   <button type="submit" class="send" title="Send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </form>
+ </div>`;
+}
+
+function buildFeed(r, myName) {
+ const events = [];
+ events.push({ kind:"event", html:`<strong>${esc(r.requester.name)}</strong> submitted the request <span class="when">· ${fmtDateTime(r.submitted_at)}</span>` });
+ (r.timeline || []).slice(1).forEach((t, idx) => {
+  // A plain chat comment from a real actor — no label/decision wrapping, just a bubble.
+  if (t.type === "comment" && t.actor && t.note) {
+   events.push({ kind:"comment", author:t.actor, when:fmtDateTime(t.t), body:esc(t.note), isMine:t.actor === myName });
+   return;
+  }
+  if (t.done && t.decision) {
+   events.push({ kind:"task-done", id:"td-"+idx, taskName:t.label, decision:t.decision, actor:t.actor, when:t.t, startedAt:t.startedAt||null, submission:t.submission||null });
+   return;
+  }
+  events.push({ kind:"event", html:`<strong>${esc(t.label)}</strong>${t.actor && t.actor !== "—" && t.actor !== "System" ? ` · assigned to <strong>${esc(t.actor)}</strong>` : ""} <span class="when">· ${fmtDateTime(t.t)}</span>` });
+  if (t.note) {
+   if (!t.actor || t.actor === "System" || t.actor === "—") {
+    events.push({ kind:"event", html:`${esc(t.note)} <span class="when">· ${fmtDateTime(t.t)}</span>` });
+   } else {
+    events.push({ kind:"comment", author:t.actor, when:fmtDateTime(t.t), body:esc(t.note), isMine:t.actor === myName });
+   }
+  }
+ });
+ return events;
+}
+function renderEvent(ev) {
+ if (ev.kind === "event") {
+  return `<div class="feed-event"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>${ev.html}</div>`;
+ }
+ if (ev.kind === "task-done") {
+  const finished = new Date(ev.when).toLocaleString("en-US", { day:"2-digit", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" });
+  const subHtml = ev.submission ? Object.entries(ev.submission).map(([k,v]) =>
+   `<div class="td-sub-row"><div class="td-sub-k">${esc(k)}</div><div class="td-sub-v">${esc(v)}</div></div>`).join("") : "";
+  return `<div class="task-done" id="${ev.id}">
+   <button class="task-done-head" onclick="toggleTaskDone(this)">
+    <span class="td-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+    <span class="td-name">${esc(ev.taskName)}</span>
+    <span class="td-decision">${esc(ev.decision)}</span>
+    <span class="td-actor">· ${esc(ev.actor)}</span>
+    <span class="td-when">· ${fmtDateTime(ev.when)}</span>
+    <svg class="td-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+   </button>
+   <div class="task-done-body">
+    <div class="td-meta">
+     <div class="td-meta-row"><div class="td-meta-k">Decision</div><div class="td-meta-v">${esc(ev.decision)}</div></div>
+     <div class="td-meta-row"><div class="td-meta-k">Handled by</div><div class="td-meta-v">${esc(ev.actor)}</div></div>
+     <div class="td-meta-row"><div class="td-meta-k">Finished</div><div class="td-meta-v">${esc(finished)}</div></div>
+    </div>
+    ${subHtml ? `<div class="td-section"><div class="td-section-head">Submission</div>${subHtml}</div>` : ""}
+   </div>
+  </div>`;
+ }
+ return `<div class="feed-comment ${ev.isMine ? 'is-mine' : ''}">
+  ${ev.ref ? `<div class="ref">${esc(ev.ref)}</div>` : ""}
+  <div>${ev.body}</div>
+  <div class="meta">${esc(ev.author)} · ${esc(ev.when)}</div>
+ </div>`;
+}
+
+function toggleTaskDone(btn) { btn.parentElement.classList.toggle("open"); }
+function toggleMute(code) {
+ const key = "dvc-demo:mute:" + code;
+ const cur = localStorage.getItem(key) === "1";
+ if (cur) localStorage.removeItem(key); else localStorage.setItem(key, "1");
+ location.reload();
+}
+function openChecklist() {
+ const items = getChecklist(code);
+ document.getElementById("checklist-body").innerHTML = items.map(i =>
+  `<label style="display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--slate-100);">
+    <input type="checkbox" ${i.done?'checked':''} onchange="toggleChecklist(${i.id}, this.checked)" />
+    <span style="${i.done?'text-decoration:line-through; color: var(--slate-500);':''}">${esc(i.label)}</span>
+   </label>`).join("");
+ openSheet("sheet-checklist");
+}
+function toggleChecklist(id, done) {
+ const items = getChecklist(code);
+ const it = items.find(x => x.id === id);
+ if (it) { it.done = done; setChecklist(code, items); }
+ openChecklist();
+}
+function openDetails() {
+ const sub = r.submitted_data || {};
+ const rows = Object.entries(sub).map(([k,v]) =>
+  `<div style="padding:8px 0; border-bottom:1px solid var(--slate-100);">
+    <div style="font-size:12px; color: var(--slate-500);">${esc(k)}</div>
+    <div style="font-size:13.5px; color: var(--slate-900);">${esc(v)}</div>
+   </div>`).join("");
+ document.getElementById("details-body").innerHTML = `
+  <div style="margin-bottom:14px;"><strong>${esc(r.code)}</strong></div>
+  <div style="padding:8px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Service</div><div>${esc(r.service.code)} · ${esc(r.service.name)}</div></div>
+  <div style="padding:8px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Requester</div><div>${esc(r.requester.name)} · ${esc(r.requester.unit || "")}</div></div>
+  <div style="padding:8px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Submitted</div><div>${esc(fmtDateTime(r.submitted_at))}</div></div>
+  <div style="padding:8px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Due</div><div>${esc(fmtDateTime(r.due_at))}</div></div>
+  ${rows ? `<div style="margin-top:14px;"><div style="font-size:11px; color: var(--slate-500); text-transform: uppercase; letter-spacing:.4px; font-weight:700; margin-bottom:6px;">Submitted data</div>${rows}</div>` : ""}
+ `;
+ openSheet("sheet-details");
+}
+function openSheet(id) {
+ document.getElementById("sheet-backdrop").classList.add("open");
+ document.getElementById(id).classList.add("open");
+}
+function closeAllSheets() {
+ document.querySelectorAll(".sheet.open, .sheet-backdrop.open").forEach(el => el.classList.remove("open"));
+}
+
+function openCompleteTask() {
+ const fields = (r.service.fields || []).map(f =>
+  `<div class="form-row"><label>${esc(f.label)}${f.required ? ' <span class="req">*</span>' : ''}</label>
+    ${f.type === 'textarea' ? `<textarea class="textarea"></textarea>`
+      : f.type === 'select' ? `<select class="select"><option value="">— Select —</option>${(f.options||[]).map(o=>`<option>${esc(o)}</option>`).join("")}</select>`
+      : `<input class="input" type="text" />`}
+   </div>`).join("");
+ document.getElementById("complete-body").innerHTML = `
+  <p style="margin: 0 0 14px; color: var(--slate-600); font-size: 13.5px;">
+   Submit the completion form for <strong>${esc((r.service.steps||[])[r.current_step]?.name || r.task_name || "this task")}</strong>.
+  </p>${fields || `<p class="muted">No form fields defined for this task.</p>`}
+ `;
+ document.getElementById("complete-modal").classList.add("open");
+}
+function closeCompleteTask() { document.getElementById("complete-modal").classList.remove("open"); }
+function submitCompleteTask() {
+ closeCompleteTask();
+ toast("Task completed — demo only. Maps to CompleteTaskRequest in VJU Hub.", "success");
+}
+
+function sendMessage(form) {
+ const ta = form.querySelector("textarea");
+ const txt = (ta.value || "").trim();
+ if (!txt) return;
+ const me = getCurrentUser();
+ const myName = me ? me.name : "John Smith";
+ const host = document.querySelector(".feed-host");
+ const html = `<div class="feed-comment is-mine"><div>${esc(txt)}</div><div class="meta">${esc(myName)} · just now</div></div>`;
+ host.insertAdjacentHTML("beforeend", html);
+ host.scrollTop = host.scrollHeight;
+ ta.value = "";
+}
+</script>
+</body>
+</html>

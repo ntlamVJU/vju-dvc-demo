@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>Sign in · VJU Public Service Portal</title>
+ <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
+ <style>
+  .login-shell { max-width: 420px; margin: 60px auto; padding: 0 16px; }
+  .login-card {
+   background: #fff; border: 1px solid var(--slate-200); border-radius: 12px;
+   padding: 28px 24px; box-shadow: 0 4px 16px rgba(30,47,65,.06);
+  }
+  .login-logo { display: flex; justify-content: center; margin-bottom: 14px; }
+  .login-logo img { width: 64px; height: 64px; border-radius: 50%; }
+  .login-card h1 { margin: 0 0 6px; font-size: 18px; text-align: center; color: var(--slate-900); }
+  .login-card .sub { font-size: 13px; color: var(--slate-600); text-align: center; margin-bottom: 22px; }
+  .oidc-btn {
+   width: 100%; padding: 11px 14px;
+   background: #fff; border: 1px solid var(--slate-300); border-radius: 8px;
+   font-size: 14px; font-weight: 600; color: var(--slate-800);
+   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+   cursor: pointer;
+  }
+  .oidc-btn:hover { border-color: var(--slate-500); background: var(--slate-50); }
+  .demo-row {
+   margin-top: 22px; padding-top: 18px; border-top: 1px dashed var(--slate-200);
+   font-size: 12.5px; color: var(--slate-500); text-align: center;
+  }
+  .demo-row p { margin: 0 0 8px; }
+  .demo-row .demo-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .demo-row button {
+   font-size: 12px; padding: 5px 11px; border-radius: 999px;
+   background: var(--slate-100); color: var(--slate-700); font-weight: 600;
+  }
+  .demo-row button:hover { background: var(--slate-200); }
+ </style>
+</head>
+<body>
+<div id="site-shell"></div>
+
+<main class="login-shell">
+ <div class="login-card">
+  <div class="login-logo"><img src="logo.png" alt="VJU" /></div>
+  <h1>Sign in to VJU Public Service Portal</h1>
+  <p class="sub">Use your VJU institutional account to continue.</p>
+
+  <button class="oidc-btn" onclick="oidcLogin()">
+   <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 1 1 0-24c3 0 5.8 1.1 8 3l5.7-5.7A20 20 0 1 0 24 44a20 20 0 0 0 19.6-23.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 18.9 13 24 13c3 0 5.8 1.1 8 3l5.7-5.7A20 20 0 0 0 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3A12 12 0 0 1 12.7 28l-6.6 5.1A20 20 0 0 0 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4 5.5l6.3 5.3C40.9 36 44 30.4 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+   Continue with VJU
+  </button>
+
+  <div class="demo-row">
+   <p>Demo only — pick a persona to sign in:</p>
+   <div class="demo-btns">
+    <button onclick="demoLogin('staff')">Staff (John Smith)</button>
+    <button onclick="demoLogin('manager')">Manager (Charles Le)</button>
+    <button onclick="demoLogin('student')">Student (Mary Tran)</button>
+   </div>
+  </div>
+ </div>
+</main>
+
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>
+mountLayout("");
+function oidcLogin() { demoLogin("staff"); }
+function demoLogin(persona) {
+ const u = MOCK_USERS[persona];
+ if (!u) return;
+ setCurrentUser(u);
+ const params = new URLSearchParams(location.search);
+ const next = params.get("next");
+ location.href = next ? decodeURIComponent(next) : "index.html";
+}
+</script>
+</body>
+</html>

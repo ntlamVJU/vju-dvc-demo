@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <title>My Schedule · VJU Public Service Portal</title>
+ <link rel="stylesheet" href="styles.css" />
+ <link rel="stylesheet" href="tailwind.output.css" />
+ <style>
+  /* ── View tabs ── */
+  .sched-tabs { display:flex; gap:4px; border-bottom: 2px solid var(--slate-200); margin-bottom: 14px; }
+  .sched-tab {
+   padding: 9px 14px; font-size: 13.5px; font-weight: 600;
+   color: var(--slate-600); background: transparent; border: 0;
+   border-bottom: 3px solid transparent; margin-bottom: -2px;
+   white-space: nowrap; cursor: pointer;
+   display: inline-flex; align-items: center; gap: 6px;
+  }
+  .sched-tab:hover { color: var(--red-700); }
+  .sched-tab.active { color: var(--brand-red); border-bottom-color: var(--brand-red); }
+
+  /* ── Toolbar (nav + filters) ── */
+  .sched-toolbar {
+   display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;
+  }
+  .sched-toolbar .nav-btns { display: inline-flex; gap: 6px; }
+  .sched-toolbar .range {
+   font-weight: 700; color: var(--slate-900); font-size: 15px; min-width: 200px;
+  }
+  .sched-toolbar label {
+   display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--slate-700); cursor: pointer;
+  }
+
+  /* ── Week grid ── */
+  .week-grid {
+   display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 1px;
+   background: var(--slate-200); border: 1px solid var(--slate-200); border-radius: 8px; overflow: hidden;
+  }
+  .wk-cell { background: #fff; padding: 6px; min-height: 36px; position: relative; }
+  .wk-header {
+   background: var(--slate-50); padding: 8px 6px; text-align: center;
+   font-size: 12px; color: var(--slate-700);
+  }
+  .wk-header .wk-dow { font-weight: 700; text-transform: uppercase; letter-spacing: .3px; font-size: 11px; color: var(--slate-500); }
+  .wk-header .wk-date { font-size: 16px; font-weight: 800; color: var(--slate-900); margin-top: 2px; }
+  .wk-header.today .wk-date { color: var(--brand-red); }
+  .wk-header.today { background: var(--red-50); }
+  .wk-time {
+   background: var(--slate-50); padding: 6px 4px; text-align: right;
+   font-size: 11px; color: var(--slate-500); font-family: ui-monospace, Consolas, monospace;
+  }
+  /* Event chip in week grid */
+  .wk-event {
+   display: block; padding: 4px 6px; margin-bottom: 2px;
+   border-radius: 4px; border-left: 3px solid;
+   font-size: 11.5px; line-height: 1.3; cursor: pointer;
+   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .wk-event .wk-event-time { font-weight: 700; }
+  .wk-event:hover { filter: brightness(0.97); }
+  .wk-allday {
+   background: rgba(0,0,0,.02); font-style: italic;
+  }
+
+  /* ── List view ── */
+  .sched-list { display: flex; flex-direction: column; gap: 6px; }
+  .sched-day-head {
+   font-size: 12px; font-weight: 700; color: var(--slate-500);
+   text-transform: uppercase; letter-spacing: .3px;
+   margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid var(--slate-200);
+  }
+  .sched-day-head:first-child { margin-top: 0; }
+  .sched-day-head.today { color: var(--brand-red); }
+  .sched-row {
+   display: grid; grid-template-columns: 100px 6px 1fr;
+   gap: 10px; align-items: stretch;
+   background: #fff; border: 1px solid var(--slate-200); border-radius: 8px;
+   padding: 10px 12px; cursor: pointer; transition: border-color .15s;
+  }
+  .sched-row:hover { border-color: var(--slate-400); }
+  .sched-row .time {
+   font-size: 12.5px; color: var(--slate-700); font-family: ui-monospace, Consolas, monospace;
+  }
+  .sched-row .stripe { border-radius: 3px; }
+  .sched-row .body { min-width: 0; }
+  .sched-row .title { font-size: 14px; font-weight: 700; color: var(--slate-900); }
+  .sched-row .meta { font-size: 12px; color: var(--slate-600); margin-top: 2px; }
+  .sched-row .badge {
+   display: inline-block; padding: 1px 8px; border-radius: 999px;
+   font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+   margin-right: 6px;
+  }
+
+  /* Mobile: hide week grid, force list view */
+  @media (max-width: 720px) {
+   .week-grid { grid-template-columns: 50px repeat(7, 1fr); }
+   .wk-event { font-size: 10.5px; padding: 3px 4px; }
+   .wk-header .wk-date { font-size: 14px; }
+   .wk-time { font-size: 10.5px; }
+  }
+  @media (max-width: 540px) {
+   .week-grid { display: none; }
+   .sched-toolbar .range { min-width: auto; flex: 1; }
+   .sched-row { grid-template-columns: 80px 6px 1fr; }
+  }
+ </style>
+</head>
+<body>
+<div id="site-shell"></div>
+
+<main class="page">
+ <div class="crumb"><a href="index.html">Home</a><span class="sep">›</span><span>My Schedule</span></div>
+
+ <div class="hstack" style="justify-content:space-between; margin-bottom: 14px;">
+  <div>
+   <h1 style="margin: 0 0 4px; font-size: 22px;">My Schedule</h1>
+   <p class="muted" style="margin: 0; font-size: 13px;">Meetings, classes, on-site events and approved trips. Synced from the Leave workflow + work_schedules table.</p>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="toast('Print — demo only')">
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+   Print
+  </button>
+ </div>
+
+ <div class="sched-tabs">
+  <button class="sched-tab active" id="tab-week" onclick="setView('week')">
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+   Week
+  </button>
+  <button class="sched-tab" id="tab-list" onclick="setView('list')">
+   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+   List
+  </button>
+ </div>
+
+ <div class="sched-toolbar">
+  <div class="nav-btns">
+   <button class="btn btn-secondary btn-sm" onclick="shiftWeek(-1)">← Prev</button>
+   <button class="btn btn-secondary btn-sm" onclick="goToday()">Today</button>
+   <button class="btn btn-secondary btn-sm" onclick="shiftWeek(1)">Next →</button>
+  </div>
+  <div class="range" id="range-label">—</div>
+  <label><input type="checkbox" id="filter-mine" /> My events only</label>
+ </div>
+
+ <div id="view-host"></div>
+</main>
+
+<!-- Detail modal -->
+<div class="modal-backdrop" id="detail-modal" onclick="if(event.target===this) closeDetail()">
+ <div class="modal">
+  <div class="modal-head"><h3 id="detail-title">—</h3>
+   <button class="sheet-close" onclick="closeDetail()" aria-label="Close">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+   </button>
+  </div>
+  <div class="modal-body" id="detail-body"></div>
+  <div class="modal-foot">
+   <button class="btn btn-secondary" onclick="closeDetail()">Close</button>
+   <button class="btn btn-primary" onclick="toast('Copy event — demo only')">Copy event</button>
+  </div>
+ </div>
+</div>
+
+<script src="layout.js"></script>
+<script src="data.js"></script>
+<script>
+mountAuthLayout("schedule");
+
+let view = "week";        // "week" | "list"
+let weekStart = startOfWeek(new Date(2026, 4, 14)); // today=May 14, 2026
+let myOnly = false;
+
+function startOfWeek(d) {
+ // Monday-based ISO week
+ const x = new Date(d);
+ const dow = (x.getDay() + 6) % 7; // Mon=0..Sun=6
+ x.setDate(x.getDate() - dow);
+ x.setHours(0, 0, 0, 0);
+ return x;
+}
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function toISODate(d) { return d.toISOString().slice(0, 10); }
+function isToday(d) {
+ const t = new Date(2026, 4, 14); // pinned demo date
+ return d.getFullYear()===t.getFullYear() && d.getMonth()===t.getMonth() && d.getDate()===t.getDate();
+}
+function fmtRange() {
+ const a = weekStart, b = addDays(weekStart, 6);
+ const fmt = d => d.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+ return `${fmt(a)} – ${fmt(b)}, ${b.getFullYear()}`;
+}
+
+function shiftWeek(n) { weekStart = addDays(weekStart, n * 7); renderView(); }
+function goToday()    { weekStart = startOfWeek(new Date(2026, 4, 14)); renderView(); }
+function setView(v)   { view = v; document.getElementById("tab-week").classList.toggle("active", v==="week"); document.getElementById("tab-list").classList.toggle("active", v==="list"); renderView(); }
+
+function eventsInWeek() {
+ const me = getCurrentUser();
+ const myName = me ? me.name : "John Smith";
+ const a = toISODate(weekStart);
+ const b = toISODate(addDays(weekStart, 6));
+ return WORK_SCHEDULES.filter(ev => {
+  if (ev.start_date > b || ev.end_date < a) return false;
+  if (myOnly) {
+   const involved = ev.chu_tri === myName || (ev.attendees || []).includes(myName);
+   if (!involved) return false;
+  }
+  return true;
+ });
+}
+
+function renderView() {
+ document.getElementById("range-label").textContent = fmtRange();
+ const host = document.getElementById("view-host");
+ const list = eventsInWeek();
+ host.innerHTML = view === "week" ? renderWeek(list) : renderList(list);
+}
+
+function renderWeek(events) {
+ // Day headers
+ const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+ const dowLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+ const headerHtml = `<div class="wk-cell wk-header"></div>` + days.map((d, i) =>
+  `<div class="wk-cell wk-header ${isToday(d) ? 'today' : ''}">
+    <div class="wk-dow">${dowLabels[i]}</div>
+    <div class="wk-date">${d.getDate()}</div>
+   </div>`).join("");
+
+ // All-day row (events spanning multiple days OR no time)
+ const allDayEvents = events.filter(e => !e.start_time);
+ const allDayHtml = allDayEvents.length ? `<div class="wk-cell wk-time wk-allday">All day</div>` +
+  days.map(d => {
+   const iso = toISODate(d);
+   const dayEvents = allDayEvents.filter(e => iso >= e.start_date && iso <= e.end_date);
+   return `<div class="wk-cell wk-allday">${dayEvents.map(eventChip).join("")}</div>`;
+  }).join("") : "";
+
+ // Hour rows 7am-19pm
+ const hours = Array.from({ length: 13 }, (_, i) => i + 7);
+ const hoursHtml = hours.map(h => {
+  return `<div class="wk-cell wk-time">${String(h).padStart(2,"0")}:00</div>` +
+   days.map(d => {
+    const iso = toISODate(d);
+    const cellEvents = events.filter(e => {
+     if (!e.start_time) return false;
+     if (e.start_date !== iso) return false;
+     return parseInt(e.start_time.split(":")[0], 10) === h;
+    });
+    return `<div class="wk-cell">${cellEvents.map(eventChip).join("")}</div>`;
+   }).join("");
+ }).join("");
+
+ return `<div class="week-grid">${headerHtml}${allDayHtml}${hoursHtml}</div>
+  <p class="muted" style="margin-top:14px; font-size:12.5px;">Week view shows 07:00–19:00. ${events.length === 0 ? "No events in this week." : `<strong>${events.length}</strong> event${events.length===1?"":"s"} this week.`}</p>`;
+}
+
+function eventChip(ev) {
+ const t = getScheduleType(ev.schedule_type);
+ const timeLabel = ev.start_time ? `<span class="wk-event-time">${esc(ev.start_time)}</span> ` : "";
+ return `<a class="wk-event" style="background:${t.bg}; color:${t.color}; border-left-color:${t.color};" onclick="event.preventDefault(); openDetail(${ev.id})">${timeLabel}${esc(ev.tieu_de)}</a>`;
+}
+
+function renderList(events) {
+ if (!events.length) return `<div class="card"><div class="card-body" style="text-align:center; padding:32px;"><p class="muted">No events match the current filter for this week.</p></div></div>`;
+ // Group by date
+ const byDate = {};
+ events.forEach(e => {
+  for (let d = new Date(e.start_date); toISODate(d) <= e.end_date; d.setDate(d.getDate()+1)) {
+   const k = toISODate(d);
+   (byDate[k] = byDate[k] || []).push(e);
+  }
+ });
+ const dates = Object.keys(byDate).sort();
+ return `<div class="sched-list">${dates.map(d => {
+  const dt = new Date(d);
+  const today = isToday(dt);
+  const label = dt.toLocaleDateString("en-US", { weekday: "long", day: "2-digit", month: "long" }) + (today ? " · Today" : "");
+  return `<div class="sched-day-head ${today?'today':''}">${esc(label)}</div>` +
+   byDate[d].map(ev => {
+    const t = getScheduleType(ev.schedule_type);
+    const timeLabel = ev.start_time ? `${esc(ev.start_time)} – ${esc(ev.end_time || "")}` : "All day";
+    return `<div class="sched-row" onclick="openDetail(${ev.id})">
+     <div class="time">${timeLabel}</div>
+     <div class="stripe" style="background:${t.color};"></div>
+     <div class="body">
+      <div class="title"><span class="badge" style="background:${t.bg}; color:${t.color};">${esc(t.label)}</span>${esc(ev.tieu_de)}</div>
+      <div class="meta">
+       ${ev.dia_diem ? `📍 ${esc(ev.dia_diem)}` : ""}
+       ${ev.chu_tri ? ` · Chair: <strong>${esc(ev.chu_tri)}</strong>` : ""}
+       ${(ev.attendees && ev.attendees.length) ? ` · ${ev.attendees.length} attendee${ev.attendees.length===1?"":"s"}` : ""}
+      </div>
+     </div>
+    </div>`;
+   }).join("");
+ }).join("")}</div>`;
+}
+
+function openDetail(id) {
+ const ev = findSchedule(id);
+ if (!ev) return;
+ const t = getScheduleType(ev.schedule_type);
+ document.getElementById("detail-title").innerHTML =
+  `<span class="badge" style="display:inline-block; padding:2px 8px; border-radius:999px; background:${t.bg}; color:${t.color}; font-size:11px; text-transform:uppercase; letter-spacing:.3px; font-weight:700; margin-right:8px;">${esc(t.label)}</span>${esc(ev.tieu_de)}`;
+ const dateLabel = ev.start_date === ev.end_date
+  ? new Date(ev.start_date).toLocaleDateString("en-US", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })
+  : `${new Date(ev.start_date).toLocaleDateString("en-US", { day:"2-digit", month:"short" })} → ${new Date(ev.end_date).toLocaleDateString("en-US", { day:"2-digit", month:"short", year: "numeric" })}`;
+ const timeLabel = ev.start_time ? `${esc(ev.start_time)} – ${esc(ev.end_time)}` : "All day";
+ const att = (ev.attendees || []).map(a => `<span style="display:inline-block; padding:3px 9px; margin: 2px; background: var(--slate-100); border-radius:999px; font-size:12px;">${esc(a)}</span>`).join("");
+ document.getElementById("detail-body").innerHTML = `
+  <div style="padding:9px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Date</div><div>${esc(dateLabel)}</div></div>
+  <div style="padding:9px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Time</div><div>${timeLabel}</div></div>
+  <div style="padding:9px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Location</div><div>${esc(ev.dia_diem || "—")}</div></div>
+  <div style="padding:9px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Chairperson</div><div><strong>${esc(ev.chu_tri || "—")}</strong></div></div>
+  ${att ? `<div style="padding:9px 0; border-bottom:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500); margin-bottom: 4px;">Attendees (${ev.attendees.length})</div><div>${att}</div></div>` : ""}
+  ${ev.ghi_chu ? `<div style="padding:9px 0;"><div style="font-size:12px; color: var(--slate-500);">Notes</div><div style="font-size:13.5px; line-height:1.5;">${esc(ev.ghi_chu)}</div></div>` : ""}
+  ${ev.meeting_notes ? `<div style="padding:9px 0; border-top:1px solid var(--slate-100);"><div style="font-size:12px; color: var(--slate-500);">Meeting notes</div><div style="font-size:13.5px; line-height:1.5;">${esc(ev.meeting_notes)}</div></div>` : ""}
+ `;
+ document.getElementById("detail-modal").classList.add("open");
+}
+function closeDetail() { document.getElementById("detail-modal").classList.remove("open"); }
+
+document.getElementById("filter-mine").addEventListener("change", e => { myOnly = e.target.checked; renderView(); });
+
+renderView();
+</script>
+</body>
+</html>
